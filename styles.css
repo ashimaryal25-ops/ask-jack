@@ -478,20 +478,17 @@ textarea::placeholder { color: #bbb; }
 
 /* ── VIDEO CARD ── */
 .video-card {
-  margin: 12px 0;
-  border-radius: 10px;
+  margin: 12px -20px;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   background: #000;
-  max-width: 100%;
-  box-sizing: border-box;
 }
 
 .video-card video {
   width: 100%;
-  max-width: 100%;
   display: block;
-  max-height: 280px;
+  max-height: 300px;
   object-fit: contain;
 }
 
@@ -507,10 +504,10 @@ textarea::placeholder { color: #bbb; }
 
 /* ── IMAGE CARD ── */
 .image-card {
-  margin: 12px 0;
-  border-radius: 10px;
+  margin: 12px -20px;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .image-card img {
