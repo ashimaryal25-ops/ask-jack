@@ -469,7 +469,7 @@ textarea::placeholder { color: #bbb; }
   max-height: 320px;
 }
 
-.video-label {
+.media-label {
   display: block;
   background: var(--navy);
   color: rgba(255,255,255,0.8);
@@ -477,6 +477,20 @@ textarea::placeholder { color: #bbb; }
   font-weight: 600;
   padding: 8px 14px;
   letter-spacing: 0.3px;
+}
+
+.image-card {
+  margin: 14px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--gray);
+}
+
+.image-card img {
+  width: 100%;
+  display: block;
+  max-height: 320px;
+  object-fit: cover;
 }
 
 /* ── FOOTER ── */

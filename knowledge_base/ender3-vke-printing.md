@@ -2,6 +2,8 @@
 machine: Ender 3 V3 KE
 category: 3D printing — hardware / printing
 
+[VIDEO: https://xyaewwhcelutcoosbawk.supabase.co/storage/v1/object/public/videos/Printing.mp4 | Full walkthrough: USB to printer — inserting your file and starting a print]
+
 ## Before you start
 - Make sure you have a .gcode file saved on a USB drive
 - Put on safety glasses
@@ -56,6 +58,8 @@ You do not need to stay. The printer stops automatically when finished.
 2. The bed is magnetic and flexible — **lift the entire bed plate off**
 3. Flex the bed gently — the print will pop off cleanly
 4. Replace the bed plate flat on the printer before leaving
+
+[IMAGE: https://xyaewwhcelutcoosbawk.supabase.co/storage/v1/object/public/Photos/Scraper.jpg | The scraper tool — located next to the monitor. Use this to remove stubborn prints from the bed.]
 
 ## After printing
 - Remove all scraps and leftover filament from the bed and surrounding area

@@ -117,14 +117,22 @@ async function askQuestion() {
 }
 
 function formatMarkdown(text) {
-  // Extract video tags before any escaping, replace with placeholders
-  const videos = [];
+  // Extract video + image tags before any escaping, replace with placeholders
+  const media = [];
   text = text.replace(
     /\[VIDEO:\s*(https?:\/\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
     (_, url, title) => {
-      const idx = videos.length;
-      videos.push(`<div class="video-card"><video controls preload="none" playsinline><source src="${url}" type="video/mp4"></video><span class="video-label">▶ ${title.trim()}</span></div>`);
-      return `%%VIDEO_${idx}%%`;
+      const idx = media.length;
+      media.push(`<div class="video-card"><video controls preload="none" playsinline><source src="${url}" type="video/mp4"></video><span class="media-label">▶ ${title.trim()}</span></div>`);
+      return `%%MEDIA_${idx}%%`;
+    }
+  );
+  text = text.replace(
+    /\[IMAGE:\s*(https?:\/\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
+    (_, url, caption) => {
+      const idx = media.length;
+      media.push(`<div class="image-card"><img src="${url}" alt="${caption.trim()}" loading="lazy"><span class="media-label">${caption.trim()}</span></div>`);
+      return `%%MEDIA_${idx}%%`;
     }
   );
 
@@ -153,9 +161,9 @@ function formatMarkdown(text) {
     })
     .join("\n");
 
-  // Restore video cards
-  videos.forEach((card, i) => {
-    html = html.replace(`%%VIDEO_${i}%%`, card);
+  // Restore media cards
+  media.forEach((card, i) => {
+    html = html.replace(`%%MEDIA_${i}%%`, card);
   });
 
   return html;
