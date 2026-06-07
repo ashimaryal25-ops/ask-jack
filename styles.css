@@ -64,13 +64,15 @@ html, body {
 .brand-sub  { color: rgba(255,255,255,0.35); font-size: 11px; display: block; margin-top: 1px; }
 
 .input-top-row {
+  min-height: 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-height: 24px;
 }
 
 .new-chat-btn {
+  position: absolute;
+  top: 12px;
+  right: 24px;
   background: var(--orange);
   border: none;
   color: white;
@@ -415,6 +417,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  position: relative;
 }
 
 .loading {
