@@ -13,12 +13,17 @@ document.querySelectorAll(".suggestion-pill").forEach((pill) => {
   });
 });
 
-document.querySelectorAll(".machine-card").forEach((card) => {
-  card.addEventListener("click", () => {
-    const machine = card.querySelector("strong").textContent;
-    questionInput.value = `How do I use the ${machine} at the ICL?`;
+document.querySelectorAll(".machine-item").forEach((item) => {
+  item.addEventListener("click", () => {
+    questionInput.value = item.dataset.prompt || "";
     questionInput.focus();
   });
+});
+
+// Auto-grow textarea
+questionInput.addEventListener("input", () => {
+  questionInput.style.height = "auto";
+  questionInput.style.height = questionInput.scrollHeight + "px";
 });
 
 questionInput.addEventListener("keydown", (e) => {
