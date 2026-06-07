@@ -63,27 +63,31 @@ html, body {
 .brand-name { color: var(--white); font-weight: 700; font-size: 14px; display: block; }
 .brand-sub  { color: rgba(255,255,255,0.35); font-size: 11px; display: block; margin-top: 1px; }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .new-chat-btn {
-  position: absolute;
-  top: 14px;
-  right: 20px;
-  z-index: 10;
   background: var(--orange);
   border: none;
   color: white;
   font-size: 12px;
   font-weight: 700;
-  padding: 8px 16px;
+  padding: 7px 14px;
   border-radius: 8px;
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(242,101,34,0.35);
   transition: background 0.12s;
 }
 
-.new-chat-btn:hover {
-  background: var(--orange-dark);
+.new-chat-btn:hover { background: var(--orange-dark); }
+
+@media (max-width: 640px) {
+  .new-chat-btn { font-size: 11px; padding: 6px 10px; }
+  .header-status span:last-child { display: none; }
 }
 
 .header-status {
