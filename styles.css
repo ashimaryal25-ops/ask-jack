@@ -99,7 +99,7 @@ html, body {
 @media (max-width: 640px) {
   .new-chat-btn { font-size: 11px; padding: 6px 10px; }
   .header-status span:last-child { display: none; }
-  .brand-college { display: block; }
+  .brand-college { display: block; padding-left: 10px; }
 }
 
 .header-status {
