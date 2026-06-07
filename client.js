@@ -144,7 +144,7 @@ function formatMarkdown(text) {
     /\[VIDEO:\s*(https?:\/\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
     (_, url, title) => {
       const idx = media.length;
-      media.push(`<div class="video-card"><video controls preload="none" playsinline><source src="${url}" type="video/mp4"></video><span class="media-label">▶ ${title.trim()}</span></div>`);
+      media.push(`<div class="video-card"><video controls preload="metadata" playsinline onloadedmetadata="this.closest('.video-card').classList.toggle('portrait',this.videoHeight>this.videoWidth)"><source src="${url}" type="video/mp4"></video><span class="media-label">▶ ${title.trim()}</span></div>`);
       return `%%MEDIA_${idx}%%`;
     }
   );
