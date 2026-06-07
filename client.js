@@ -3,8 +3,20 @@ const askBtn = document.getElementById("askBtn");
 const chatThread = document.getElementById("chatThread");
 const loading = document.getElementById("loading");
 const welcomeSection = document.getElementById("welcomeSection");
+const newChatBtn = document.getElementById("newChatBtn");
 
 let conversationHistory = [];
+
+newChatBtn.addEventListener("click", () => {
+  conversationHistory = [];
+  // Remove all messages, leave welcome section in place
+  Array.from(chatThread.children).forEach(el => {
+    if (el.id !== "welcomeSection") el.remove();
+  });
+  welcomeSection.hidden = false;
+  questionInput.value = "";
+  questionInput.style.height = "auto";
+});
 
 document.querySelectorAll(".suggestion-pill").forEach((pill) => {
   pill.addEventListener("click", () => {
