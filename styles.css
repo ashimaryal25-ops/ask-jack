@@ -80,14 +80,26 @@ html, body {
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
-  transition: background 0.12s;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: background 0.12s, opacity 0.15s, visibility 0.15s;
+}
+
+.new-chat-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .new-chat-btn:hover { background: var(--orange-dark); }
 
+.brand-college { display: inline; }
+
 @media (max-width: 640px) {
   .new-chat-btn { font-size: 11px; padding: 6px 10px; }
   .header-status span:last-child { display: none; }
+  .brand-college { display: block; }
 }
 
 .header-status {

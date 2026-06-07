@@ -13,7 +13,7 @@ newChatBtn.addEventListener("click", () => {
     if (el.id !== "welcomeSection") el.remove();
   });
   welcomeSection.hidden = false;
-  newChatBtn.hidden = true;
+  newChatBtn.classList.remove("visible");
   questionInput.value = "";
   questionInput.style.height = "auto";
 });
@@ -49,7 +49,7 @@ askBtn.addEventListener("click", askQuestion);
 
 function appendUserBubble(text) {
   welcomeSection.hidden = true;
-  newChatBtn.hidden = false;
+  newChatBtn.classList.add("visible");
   const div = document.createElement("div");
   div.className = "user-bubble";
   div.textContent = text;
