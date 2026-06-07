@@ -17,12 +17,9 @@
             <span class="brand-sub">Innovation &amp; Creativity Lab · Gettysburg College</span>
           </div>
         </div>
-        <div class="header-right">
-          <button class="new-chat-btn" id="newChatBtn" type="button">+ New Chat</button>
-          <div class="header-status">
-            <span class="status-dot"></span>
-            <span>Online 24/7</span>
-          </div>
+        <div class="header-status">
+          <span class="status-dot"></span>
+          <span>Online 24/7</span>
         </div>
       </div>
     </header>
@@ -122,9 +119,12 @@
         </div>
 
         <div class="input-area">
-          <div class="loading" id="loading" hidden>
-            <div class="loading-dots"><span></span><span></span><span></span></div>
-            <span>Thinking...</span>
+          <div class="input-top-row">
+            <div class="loading" id="loading" hidden>
+              <div class="loading-dots"><span></span><span></span><span></span></div>
+              <span>Thinking...</span>
+            </div>
+            <button class="new-chat-btn" id="newChatBtn" type="button" hidden>+ New Chat</button>
           </div>
           <div class="input-row">
             <textarea

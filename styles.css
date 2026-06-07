@@ -61,23 +61,25 @@ html, body {
 .brand-name { color: var(--white); font-weight: 700; font-size: 14px; display: block; }
 .brand-sub  { color: rgba(255,255,255,0.35); font-size: 11px; display: block; margin-top: 1px; }
 
-.header-right {
+.input-top-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  min-height: 24px;
 }
 
 .new-chat-btn {
   background: var(--orange);
   border: none;
   color: white;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 5px 12px;
+  border-radius: 6px;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.12s;
+  white-space: nowrap;
+  transition: background 0.12s;
 }
 
 .new-chat-btn:hover {
