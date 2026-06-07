@@ -277,6 +277,7 @@ html, body {
   font-size: 13.5px;
   line-height: 1.55;
   word-break: break-word;
+  overflow-wrap: break-word;
   margin-right: 24px;
 }
 
@@ -516,6 +517,49 @@ textarea::placeholder { color: #bbb; }
 /* ── RESPONSIVE ── */
 @media (max-width: 640px) {
   .sidebar { display: none; }
-  .user-bubble { max-width: 85%; margin-right: 12px; }
-  .assistant-message { max-width: 95%; margin-left: 12px; }
+
+  .chat-thread {
+    padding: 16px 0;
+    gap: 12px;
+  }
+
+  .user-bubble {
+    max-width: 88%;
+    margin-right: 12px;
+    font-size: 13px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .assistant-message {
+    max-width: 95%;
+    margin-left: 12px;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .answer-content {
+    padding: 12px 14px;
+    font-size: 13px;
+    overflow-x: hidden;
+  }
+
+  .answer-content ol,
+  .answer-content ul {
+    padding-left: 16px;
+  }
+
+  .video-card video {
+    max-height: 200px;
+  }
+
+  .image-card img {
+    max-height: 200px;
+  }
+
+  .input-area {
+    padding: 10px 12px 12px;
+  }
+
+  .input-hint { display: none; }
 }

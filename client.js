@@ -27,7 +27,10 @@ questionInput.addEventListener("input", () => {
 });
 
 questionInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && e.ctrlKey) askQuestion();
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    askQuestion();
+  }
 });
 
 askBtn.addEventListener("click", askQuestion);
