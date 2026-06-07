@@ -36,36 +36,11 @@
 
     <main class="main">
 
-      <section class="chat-section">
-        <div class="input-card">
-          <textarea
-            id="questionInput"
-            placeholder="e.g. I want to 3D print a dog figurine for my desk..."
-            rows="2"
-            autocomplete="off"
-          ></textarea>
-          <button class="ask-btn" id="askBtn" type="button">Ask &rarr;</button>
-        </div>
-        <p class="input-hint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to send</p>
+      <!-- Chat thread: empty at start, fills as conversation goes -->
+      <div class="chat-thread" id="chatThread"></div>
 
-        <div class="loading" id="loading" hidden>
-          <div class="loading-dots"><span></span><span></span><span></span></div>
-          <span>Finding the right guide for you...</span>
-        </div>
-
-        <div class="answer-box" id="answerBox" hidden>
-          <div class="answer-header">
-            <div class="assistant-tag">
-              <span class="dot"></span>
-              Build Guide
-            </div>
-            <button class="copy-btn" id="copyBtn" type="button">Copy</button>
-          </div>
-          <div class="answer-content" id="answerContent"></div>
-        </div>
-      </section>
-
-      <section>
+      <!-- Welcome state: machine cards, hidden once chat starts -->
+      <section class="welcome-section" id="welcomeSection">
         <p class="section-label">Available equipment — click to ask</p>
         <div class="machine-grid">
 
@@ -131,6 +106,24 @@
 
         </div>
       </section>
+
+      <!-- Input: always pinned at bottom -->
+      <div class="input-section">
+        <div class="loading" id="loading" hidden>
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+          <span>Finding the right guide for you...</span>
+        </div>
+        <div class="input-card">
+          <textarea
+            id="questionInput"
+            placeholder="e.g. I want to 3D print a dog figurine for my desk..."
+            rows="2"
+            autocomplete="off"
+          ></textarea>
+          <button class="ask-btn" id="askBtn" type="button">Ask &rarr;</button>
+        </div>
+        <p class="input-hint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to send</p>
+      </div>
 
     </main>
 

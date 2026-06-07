@@ -1,9 +1,10 @@
 const questionInput = document.getElementById("questionInput");
 const askBtn = document.getElementById("askBtn");
-const answerBox = document.getElementById("answerBox");
-const answerContent = document.getElementById("answerContent");
+const chatThread = document.getElementById("chatThread");
 const loading = document.getElementById("loading");
-const copyBtn = document.getElementById("copyBtn");
+const welcomeSection = document.getElementById("welcomeSection");
+
+let conversationHistory = [];
 
 document.querySelectorAll(".suggestion-pill").forEach((pill) => {
   pill.addEventListener("click", () => {
@@ -26,32 +27,57 @@ questionInput.addEventListener("keydown", (e) => {
 
 askBtn.addEventListener("click", askQuestion);
 
-copyBtn.addEventListener("click", () => {
-  navigator.clipboard.writeText(answerContent.innerText);
-  copyBtn.textContent = "Copied!";
-  setTimeout(() => (copyBtn.textContent = "Copy"), 2000);
-});
+function appendUserBubble(text) {
+  welcomeSection.hidden = true;
+  const div = document.createElement("div");
+  div.className = "user-bubble";
+  div.textContent = text;
+  chatThread.appendChild(div);
+  div.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function appendAssistantBubble() {
+  const wrapper = document.createElement("div");
+  wrapper.className = "assistant-message";
+  wrapper.innerHTML = `
+    <div class="answer-header">
+      <div class="assistant-tag"><span class="dot"></span>Build Guide</div>
+      <button class="copy-btn" type="button">Copy</button>
+    </div>
+    <div class="answer-content"></div>
+  `;
+  wrapper.querySelector(".copy-btn").addEventListener("click", (e) => {
+    const content = wrapper.querySelector(".answer-content");
+    navigator.clipboard.writeText(content.innerText);
+    e.target.textContent = "Copied!";
+    setTimeout(() => (e.target.textContent = "Copy"), 2000);
+  });
+  chatThread.appendChild(wrapper);
+  return wrapper.querySelector(".answer-content");
+}
 
 async function askQuestion() {
   const question = questionInput.value.trim();
   if (!question) return;
 
+  conversationHistory.push({ role: "user", content: question });
+  appendUserBubble(question);
+  questionInput.value = "";
+
   askBtn.disabled = true;
-  answerBox.hidden = true;
   loading.hidden = false;
-  answerContent.innerHTML = "";
 
   try {
     const res = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ messages: conversationHistory }),
     });
 
     if (!res.ok) throw new Error("Server error");
 
     loading.hidden = true;
-    answerBox.hidden = false;
+    const contentEl = appendAssistantBubble();
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -73,15 +99,17 @@ async function askQuestion() {
         try {
           const { text } = JSON.parse(data);
           fullText += text;
-          answerContent.innerHTML = formatMarkdown(fullText);
-          answerBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          contentEl.innerHTML = formatMarkdown(fullText);
+          contentEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
         } catch {}
       }
     }
+
+    conversationHistory.push({ role: "assistant", content: fullText });
   } catch (err) {
     loading.hidden = true;
-    answerBox.hidden = false;
-    answerContent.innerHTML = `<p style="color:red">Something went wrong. Please try again.</p>`;
+    const contentEl = appendAssistantBubble();
+    contentEl.innerHTML = `<p style="color:red">Something went wrong. Please try again.</p>`;
   } finally {
     askBtn.disabled = false;
     loading.hidden = true;
@@ -89,35 +117,22 @@ async function askQuestion() {
 }
 
 function formatMarkdown(text) {
-  // Escape HTML first
   let html = text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  // Headers
   html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
   html = html.replace(/^##\s+(.+)$/gm, "<h3>$1</h3>");
   html = html.replace(/^#\s+(.+)$/gm, "<h3>$1</h3>");
-
-  // Bold
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-
-  // Links
   html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
-
-  // Numbered lists
   html = html.replace(/^(\d+)\.\s+(.+)$/gm, "<li>$2</li>");
-  html = html.replace(/(<li>[\s\S]*?<\/li>)(\n<li>)/g, "$1$2");
   html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, "<ol>$1</ol>");
-
-  // Bullet lists
   html = html.replace(/^[-*]\s+(.+)$/gm, "<ul-item>$1</ul-item>");
   html = html.replace(/((?:<ul-item>.*<\/ul-item>\n?)+)/g, (m) =>
     "<ul>" + m.replace(/<ul-item>(.*?)<\/ul-item>/g, "<li>$1</li>") + "</ul>"
   );
-
-  // Paragraphs — wrap lines not already in a block tag
   html = html
     .split("\n")
     .map((line) => {

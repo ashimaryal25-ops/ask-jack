@@ -28,28 +28,27 @@ async function retrieveChunks(embedding) {
   return data;
 }
 
-async function streamAnswer(query, chunks, res) {
+async function streamAnswer(messages, chunks, res) {
   const context = chunks
     .map((c, i) => `[Source ${i + 1}: ${c.source_file}]\n${c.content}`)
     .join("\n\n---\n\n");
 
-  const prompt = `You are the ICL Lab Assistant at Gettysburg College's Innovation & Creativity Lab (Plank Hall).
+  const systemPrompt = `You are the ICL Lab Assistant at Gettysburg College's Innovation & Creativity Lab.
 Your job is to guide beginners step-by-step through using lab equipment — from zero to finished build.
 Be friendly, clear, and encouraging. Use numbered steps. Never assume prior knowledge.
+You remember the full conversation — refer back to earlier messages when relevant.
 
 STRICT RULE: Only answer using the information in the KNOWLEDGE BASE below. Do not use any outside knowledge.
 If the knowledge base does not contain enough information to answer the question, say:
-"I don't have a guide for that yet. Please ask an ICL staff member in Plank Hall for help with this."
+"I don't have a guide for that yet. Please ask an ICL staff member for help with this."
 Never invent steps, settings, or instructions that are not explicitly in the knowledge base.
-
-Student asked: "${query}"
 
 KNOWLEDGE BASE:
 ${context}`;
 
   const stream = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "user", content: prompt }],
+    messages: [{ role: "system", content: systemPrompt }, ...messages],
     temperature: 0.3,
     stream: true,
   });
@@ -80,14 +79,15 @@ const server = http.createServer(async (req, res) => {
     req.on("data", (d) => (body += d));
     req.on("end", async () => {
       try {
-        const { question } = JSON.parse(body);
-        if (!question?.trim()) {
+        const { messages } = JSON.parse(body);
+        const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content;
+        if (!lastUserMsg?.trim()) {
           res.writeHead(400); res.end("Missing question");
           return;
         }
-        const embedding = await embedQuery(question);
+        const embedding = await embedQuery(lastUserMsg);
         const chunks = await retrieveChunks(embedding);
-        await streamAnswer(question, chunks, res);
+        await streamAnswer(messages, chunks, res);
       } catch (err) {
         console.error(err);
         res.writeHead(500); res.end("Server error");
