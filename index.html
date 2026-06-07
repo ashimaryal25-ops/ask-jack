@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ICL Lab Assistant — Gettysburg College</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+
+    <header class="header">
+      <div class="header-inner">
+        <div class="brand">
+          <div class="brand-mark">ICL</div>
+          <div>
+            <span class="brand-name">Innovation &amp; Creativity Lab</span>
+            <span class="brand-sub">Gettysburg College</span>
+          </div>
+        </div>
+        <span class="badge">AI Lab Assistant</span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-inner">
+        <h1>What do you want to<br><span class="highlight">make today?</span></h1>
+        <p class="hero-sub">Describe your project — I'll guide you step-by-step from idea to finished build, even when no instructor is around.</p>
+        <div class="suggestions">
+          <button class="suggestion-pill" type="button" data-prompt="I want to 3D print a phone stand">3D print a phone stand</button>
+          <button class="suggestion-pill" type="button" data-prompt="How do I laser cut an acrylic sign?">Laser cut a sign</button>
+          <button class="suggestion-pill" type="button" data-prompt="How do I embroider a logo?">Embroider a logo</button>
+          <button class="suggestion-pill" type="button" data-prompt="How do I make a vinyl sticker?">Make a vinyl sticker</button>
+        </div>
+      </div>
+    </section>
+
+    <main class="main">
+
+      <section class="chat-section">
+        <div class="input-card">
+          <textarea
+            id="questionInput"
+            placeholder="e.g. I want to 3D print a dog figurine for my desk..."
+            rows="2"
+            autocomplete="off"
+          ></textarea>
+          <button class="ask-btn" id="askBtn" type="button">Ask &rarr;</button>
+        </div>
+        <p class="input-hint">Press <kbd>Ctrl</kbd>+<kbd>Enter</kbd> to send</p>
+
+        <div class="loading" id="loading" hidden>
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+          <span>Finding the right guide for you...</span>
+        </div>
+
+        <div class="answer-box" id="answerBox" hidden>
+          <div class="answer-header">
+            <div class="assistant-tag">
+              <span class="dot"></span>
+              Build Guide
+            </div>
+            <button class="copy-btn" id="copyBtn" type="button">Copy</button>
+          </div>
+          <div class="answer-content" id="answerContent"></div>
+        </div>
+      </section>
+
+      <section>
+        <p class="section-label">Available equipment — click to ask</p>
+        <div class="machine-grid">
+
+          <div class="machine-card">
+            <div class="machine-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 7h10M7 11h6"/></svg>
+            </div>
+            <div class="machine-label">
+              <strong>3D Printing</strong>
+              <span>Ender 3 V3 KE · CR-M4</span>
+            </div>
+          </div>
+
+          <div class="machine-card">
+            <div class="machine-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <div class="machine-label">
+              <strong>Laser Cutting</strong>
+              <span>Acrylic, wood &amp; more</span>
+            </div>
+          </div>
+
+          <div class="machine-card">
+            <div class="machine-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M5 12h2M17 12h2M12 5v2M12 17v2"/></svg>
+            </div>
+            <div class="machine-label">
+              <strong>Embroidery</strong>
+              <span>Auto &amp; manual</span>
+            </div>
+          </div>
+
+          <div class="machine-card">
+            <div class="machine-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+            </div>
+            <div class="machine-label">
+              <strong>Vinyl Cutter</strong>
+              <span>Stickers &amp; decals</span>
+            </div>
+          </div>
+
+          <div class="machine-card">
+            <div class="machine-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            </div>
+            <div class="machine-label">
+              <strong>Poster / Plotter</strong>
+              <span>Large format print</span>
+            </div>
+          </div>
+
+          <div class="machine-card">
+            <div class="machine-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2v-4M9 21H5a2 2 0 0 1-2-2v-4m0 0h18"/></svg>
+            </div>
+            <div class="machine-label">
+              <strong>Electronics</strong>
+              <span>Arduino &amp; sensors</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <p>ICL is open <strong>24/7</strong> &middot; Gettysburg College &middot; <a href="mailto:icl@gettysburg.edu">icl@gettysburg.edu</a></p>
+    </footer>
+
+    <script src="client.js"></script>
+  </body>
+</html>
