@@ -233,6 +233,7 @@ html, body {
 
 .chat-thread {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 24px 0;
