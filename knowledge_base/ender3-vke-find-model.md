@@ -10,6 +10,7 @@ You do not need to design anything. Thousands of free models are available onlin
 
 **Recommended sites:**
 - **Thingiverse** (www.thingiverse.com) — largest free library, search for almost anything
+  [VIDEO: https://xyaewwhcelutcoosbawk.supabase.co/storage/v1/object/public/videos/downloadingsinglethingsverse.mp4 | How to find and download a model from Thingiverse]
 - **Printables** (www.printables.com) — high quality community models
 - **CGTrader** (www.cgtrader.com) — mix of free and paid
 - **Sketchfab** (www.sketchfab.com) — good for organic and artistic models
