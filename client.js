@@ -117,22 +117,21 @@ async function askQuestion() {
 }
 
 function formatMarkdown(text) {
-  // Video cards — must run BEFORE HTML escaping
+  // Extract video tags before any escaping, replace with placeholders
+  const videos = [];
   text = text.replace(
     /\[VIDEO:\s*(https?:\/\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
-    (_, url, title) =>
-      `<div class="video-card"><video controls preload="none"><source src="${url}" type="video/mp4"></video><span class="video-label">${title.trim()}</span></div>`
+    (_, url, title) => {
+      const idx = videos.length;
+      videos.push(`<div class="video-card"><video controls preload="none" playsinline><source src="${url}" type="video/mp4"></video><span class="video-label">▶ ${title.trim()}</span></div>`);
+      return `%%VIDEO_${idx}%%`;
+    }
   );
 
   let html = text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-
-  // Restore video cards after escaping (they were already safe HTML)
-  html = html.replace(/&lt;div class="video-card"&gt;[\s\S]*?&lt;\/div&gt;/g, (m) =>
-    m.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
-  );
 
   html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
   html = html.replace(/^##\s+(.+)$/gm, "<h3>$1</h3>");
@@ -153,6 +152,11 @@ function formatMarkdown(text) {
       return `<p>${line}</p>`;
     })
     .join("\n");
+
+  // Restore video cards
+  videos.forEach((card, i) => {
+    html = html.replace(`%%VIDEO_${i}%%`, card);
+  });
 
   return html;
 }
