@@ -314,6 +314,7 @@ html, body {
 /* ── CHAT MESSAGES ── */
 .user-bubble {
   align-self: flex-end;
+  flex-shrink: 0;
   background: var(--navy);
   color: var(--white);
   padding: 10px 16px;
@@ -328,6 +329,7 @@ html, body {
 
 .assistant-message {
   align-self: flex-start;
+  flex-shrink: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
