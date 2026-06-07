@@ -2,8 +2,9 @@
 machine: Ender 3 V3 KE
 category: 3D printing — model preparation
 
-## What file format does the printer need?
-The printer needs a **.gcode** file. You do not create this directly — you start with a **.stl** or **.obj** file and convert it using slicing software (Ultimaker Cura).
+## What file format do I start with?
+You start with a **.stl** or **.obj** file — this is the 3D model file you download or design. Do NOT look for or download a .gcode file.
+The .gcode file is generated automatically later by slicing software (Ultimaker Cura) and is what the printer reads. Students never create gcode themselves.
 
 ## Option A — Download a model someone already made (easiest for beginners)
 You do not need to design anything. Thousands of free models are available online.

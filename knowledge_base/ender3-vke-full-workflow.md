@@ -10,10 +10,11 @@ Here is the complete process from idea to finished object.
 
 ## Step 1 — Get a model file
 
-You need a .stl or .obj file of the object you want to print.
+You need a **.stl** or **.obj** file of the object you want to print. Do NOT look for a .gcode file — that gets created automatically in Step 2.
 
 **If someone already made it (easiest):**
 Search for it on Thingiverse (www.thingiverse.com) or Printables (www.printables.com). Download the .stl file.
+[VIDEO: https://xyaewwhcelutcoosbawk.supabase.co/storage/v1/object/public/videos/downloadingsinglethingsverse.mp4 | How to find and download a model from Thingiverse]
 
 **If you need something custom:**
 Design it in Tinkercad (www.tinkercad.com) — free, browser-based, no install needed. Export as .stl when done.
