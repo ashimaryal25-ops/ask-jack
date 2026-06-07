@@ -23,7 +23,8 @@ Slicing converts your .stl or .obj model file into a .gcode file — the set of 
 ## Adjusting your model (optional)
 Use the toolbar on the left side of the screen:
 - **Move** — reposition the model on the bed
-- **Scale** — make it bigger or smaller (check "Uniform Scaling" to keep proportions)
+- **Scale** — make it bigger or smaller (check "Uniform Scaling" to keep proportions). Click the model first, then change the dimensions in the Scale panel.
+  [VIDEO: https://xyaewwhcelutcoosbawk.supabase.co/storage/v1/object/public/videos/scaling.mp4 | How to scale your model in Cura]
 - **Rotate** — tilt or spin the model. Flat side down prints best.
 - **Mirror** — flip the model horizontally
 

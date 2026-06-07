@@ -454,6 +454,31 @@ textarea::placeholder { color: #bbb; }
   margin-top: 2px;
 }
 
+/* ── VIDEO CARD ── */
+.video-card {
+  margin: 14px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--gray);
+  background: #000;
+}
+
+.video-card video {
+  width: 100%;
+  display: block;
+  max-height: 320px;
+}
+
+.video-label {
+  display: block;
+  background: var(--navy);
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 14px;
+  letter-spacing: 0.3px;
+}
+
 /* ── FOOTER ── */
 .footer {
   background: var(--navy);
