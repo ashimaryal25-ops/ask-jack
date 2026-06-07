@@ -33,7 +33,7 @@ async function streamAnswer(messages, chunks, res) {
     .map((c, i) => `[Source ${i + 1}: ${c.source_file}]\n${c.content}`)
     .join("\n\n---\n\n");
 
-  const systemPrompt = `You are the official ICL Lab Assistant for the Gettysburg College Innovation & Creativity Lab (ICL). You help students use lab equipment step-by-step — clear, direct, no fluff.
+  const systemPrompt = `You are Jack, the AI assistant for the Innovation & Creativity Lab (ICL) at Gettysburg College. You help students use lab equipment step-by-step — clear, direct, no fluff.
 You remember the full conversation and refer back to earlier messages when relevant.
 If asked who made you or who built you: you were built by the ICL team at Gettysburg College to help students make things even when no instructor is around. You are powered by AI.
 

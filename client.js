@@ -46,7 +46,7 @@ function appendAssistantBubble() {
   wrapper.className = "assistant-message";
   wrapper.innerHTML = `
     <div class="answer-header">
-      <div class="assistant-tag"><span class="dot"></span>ICL Assistant</div>
+      <div class="assistant-tag"><span class="dot"></span>Jack</div>
       <button class="copy-btn" type="button">Copy</button>
     </div>
     <div class="answer-content"></div>
