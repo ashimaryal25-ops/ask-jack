@@ -11,6 +11,17 @@ const supabase = createClient(
 );
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Simple in-memory rate limiter — 30 requests per 5 minutes per IP
+const rateMap = new Map();
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateMap.get(ip) || { count: 0, resetAt: now + 5 * 60 * 1000 };
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + 5 * 60 * 1000; }
+  entry.count++;
+  rateMap.set(ip, entry);
+  return entry.count > 30;
+}
+
 async function embedQuery(text) {
   const res = await openai.embeddings.create({
     model: "text-embedding-3-small",
@@ -94,11 +105,23 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && req.url === "/api/ask") {
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
+    if (isRateLimited(ip)) {
+      res.writeHead(429); res.end("Too many requests — slow down");
+      return;
+    }
     let body = "";
-    req.on("data", (d) => (body += d));
+    req.on("data", (d) => {
+      body += d;
+      if (body.length > 50000) { res.writeHead(413); res.end("Request too large"); req.destroy(); }
+    });
     req.on("end", async () => {
       try {
         const { messages } = JSON.parse(body);
+        if (!Array.isArray(messages) || messages.length > 100) {
+          res.writeHead(400); res.end("Invalid messages");
+          return;
+        }
         const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content;
         if (!lastUserMsg?.trim()) {
           res.writeHead(400); res.end("Missing question");
@@ -131,8 +154,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Serve static files
-  let filePath = req.url === "/" ? "/index.html" : req.url;
+  let filePath = req.url === "/" ? "/index.html" : req.url.split("?")[0];
   filePath = path.join(__dirname, filePath);
+  // Block path traversal — resolved path must stay inside project directory
+  if (!path.resolve(filePath).startsWith(path.resolve(__dirname))) {
+    res.writeHead(403); res.end("Forbidden");
+    return;
+  }
   const ext = path.extname(filePath);
   const mime = { ".html": "text/html", ".css": "text/css", ".js": "application/javascript" };
   fs.readFile(filePath, (err, data) => {
