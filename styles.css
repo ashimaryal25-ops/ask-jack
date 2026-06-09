@@ -521,6 +521,27 @@ textarea::placeholder { color: #bbb; }
   font-family: inherit;
 }
 
+/* ── DOWNLOAD BUTTON ── */
+.download-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 20px 16px;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+
+.download-btn svg { width: 13px; height: 13px; stroke: currentColor; }
+.download-btn:hover { border-color: var(--orange); color: var(--orange); }
+
 /* ── GUIDE OPTIONS ── */
 .guide-options {
   display: flex;
