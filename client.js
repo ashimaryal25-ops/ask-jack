@@ -280,9 +280,12 @@ async function askQuestion() {
 }
 
 function formatMarkdownStreaming(text) {
-  // Strip media tags to plain labels during streaming — prevents video flicker on every token
+  // Strip complete media tags to plain labels
   text = text.replace(/\[VIDEO:\s*https?:\/\/[^\s|]+\s*\|\s*([^\]]+)\]/g, '▶ $1');
   text = text.replace(/\[IMAGE:\s*https?:\/\/[^\s|]+\s*\|\s*([^\]]+)\]/g, '🖼 $1');
+  // Strip incomplete/partial tags mid-stream (tag started but ] not received yet)
+  text = text.replace(/\[VIDEO:[^\]]*$/, '');
+  text = text.replace(/\[IMAGE:[^\]]*$/, '');
   return formatMarkdown(text);
 }
 
