@@ -465,7 +465,7 @@ html, body {
   display: flex;
   gap: 8px;
   align-items: flex-end;
-  background: var(--bg);
+  background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: 12px;
   padding: 10px 10px 10px 16px;
