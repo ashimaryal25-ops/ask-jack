@@ -47,6 +47,24 @@ questionInput.addEventListener("keydown", (e) => {
 
 askBtn.addEventListener("click", askQuestion);
 
+// ── Detect guide-type requests ──
+function isGuideRequest(query) {
+  const q = query.toLowerCase().trim();
+  // Don't intercept troubleshooting queries
+  if (/error|fix|broken|not working|failed|stuck|wrong|issue|problem|clog/i.test(q)) return false;
+  const patterns = [
+    /how (do|can|should) i (use|make|create|3d\s?print|print|cut|start|begin|do)/i,
+    /how to (use|make|create|3d\s?print|print|cut|start)/i,
+    /walk me through/i,
+    /i want to (make|create|print|3d\s?print|cut|build|use)/i,
+    /i('d like| would like) to (make|create|print|3d\s?print|cut|build)/i,
+    /help me (make|create|print|cut|build|use the)/i,
+    /get started (with|on)/i,
+    /where do i start/i,
+  ];
+  return patterns.some(p => p.test(q));
+}
+
 function appendUserBubble(text) {
   welcomeSection.hidden = true;
   newChatBtn.classList.add("visible");
@@ -77,14 +95,62 @@ function appendAssistantBubble() {
   return wrapper.querySelector(".answer-content");
 }
 
-async function askQuestion() {
-  const question = questionInput.value.trim();
-  if (!question) return;
+// ── Show guide mode options ──
+function showGuideOptions(originalQuery) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "assistant-message";
+  wrapper.innerHTML = `
+    <div class="answer-header">
+      <div class="assistant-tag"><span class="dot"></span>Jack</div>
+    </div>
+    <div class="answer-content">
+      <p style="margin-bottom:14px;color:#374151;">How would you like me to guide you?</p>
+      <div class="guide-options">
+        <button class="guide-option" data-mode="full">
+          <span class="guide-option-icon">📋</span>
+          <div>
+            <div class="guide-option-title">Full Guide</div>
+            <div class="guide-option-desc">Complete walkthrough — all steps at once</div>
+          </div>
+        </button>
+        <button class="guide-option" data-mode="steps">
+          <span class="guide-option-icon">🪜</span>
+          <div>
+            <div class="guide-option-title">Step by Step</div>
+            <div class="guide-option-desc">One step at a time, at your own pace</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  `;
+  chatThread.appendChild(wrapper);
+  wrapper.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
-  conversationHistory.push({ role: "user", content: question });
-  appendUserBubble(question);
-  questionInput.value = "";
+  wrapper.querySelectorAll(".guide-option").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const mode = btn.dataset.mode;
+      // Lock options after selection
+      wrapper.querySelectorAll(".guide-option").forEach(b => {
+        b.disabled = true;
+        b.style.opacity = "0.45";
+        b.style.cursor = "default";
+      });
+      btn.style.opacity = "1";
+      btn.style.borderColor = "var(--orange)";
+      btn.style.background = "#fff5f0";
 
+      const userMessage = mode === "steps"
+        ? `${originalQuery} — Please walk me through this one step at a time. Give me only Step 1 first, then wait for me to say "next" before continuing to the next step.`
+        : originalQuery;
+
+      conversationHistory.push({ role: "user", content: userMessage });
+      await streamFromAPI();
+    });
+  });
+}
+
+// ── Core streaming logic ──
+async function streamFromAPI() {
   askBtn.disabled = true;
   loading.hidden = false;
 
@@ -137,8 +203,23 @@ async function askQuestion() {
   }
 }
 
+async function askQuestion() {
+  const question = questionInput.value.trim();
+  if (!question) return;
+
+  appendUserBubble(question);
+  questionInput.value = "";
+  questionInput.style.height = "auto";
+
+  if (isGuideRequest(question)) {
+    showGuideOptions(question);
+  } else {
+    conversationHistory.push({ role: "user", content: question });
+    await streamFromAPI();
+  }
+}
+
 function formatMarkdown(text) {
-  // Extract video + image tags before any escaping, replace with placeholders
   const media = [];
   text = text.replace(
     /\[VIDEO:\s*(https?:\/\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
@@ -182,7 +263,6 @@ function formatMarkdown(text) {
     })
     .join("\n");
 
-  // Restore media cards
   media.forEach((card, i) => {
     html = html.replace(`%%MEDIA_${i}%%`, card);
   });
