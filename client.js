@@ -141,7 +141,7 @@ function showGuideOptions(originalQuery) {
 
       const userMessage = mode === "steps"
         ? `${originalQuery} — Please walk me through this one step at a time. Give me only Step 1 first, then wait for me to say "next" before continuing to the next step.`
-        : `${originalQuery} — Please give me the complete guide with all steps at once.`;
+        : `${originalQuery} — Give me the COMPLETE guide with ALL steps right now in one response. Do NOT stop after Step 1. Do NOT wait for me to say "next". Ignore any previous step-by-step instructions. Show every step from start to finish.`;
 
       conversationHistory.push({ role: "user", content: userMessage });
       await streamFromAPI(mode === "full");
@@ -194,8 +194,9 @@ async function streamFromAPI(isFullGuide = false) {
 
     conversationHistory.push({ role: "assistant", content: fullText });
 
-    // Add download button only for full guide responses with substantial content
-    if (isFullGuide && fullText.trim().length > 300) {
+    // Add download button only for full guide responses that actually contain multiple steps
+    const hasMultipleSteps = /step\s*[23456789]/i.test(fullText) || (fullText.match(/\n\d+\./g) || []).length >= 3;
+    if (isFullGuide && hasMultipleSteps) {
       const dlBtn = document.createElement("button");
       dlBtn.className = "download-btn";
       dlBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Save as PDF`;
