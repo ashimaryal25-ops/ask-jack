@@ -217,6 +217,10 @@ async function streamFromAPI(isFullGuide = false) {
 function printGuide(markdownText) {
   const html = formatMarkdown(markdownText);
   const win = window.open("", "_blank");
+  if (!win) {
+    alert("Please allow popups for this site to save the guide as PDF.");
+    return;
+  }
   win.document.write(`
     <!DOCTYPE html>
     <html>
