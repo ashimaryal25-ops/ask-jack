@@ -52,15 +52,17 @@ function isGuideRequest(query) {
   const q = query.toLowerCase().trim();
   // Don't intercept troubleshooting queries
   if (/error|fix|broken|not working|failed|stuck|wrong|issue|problem|clog/i.test(q)) return false;
+  // Require a noun/object after the action verb — bare verbs like "how to print" go to
+  // Jack for clarification first, then the guide selector fires on the follow-up
   const patterns = [
-    /how (do|can|should) i (use|make|create|3d\s?print|print|cut|start|begin|do)/i,
-    /how to (use|make|create|3d\s?print|print|cut|start)/i,
-    /walk me through/i,
-    /i want to (make|create|print|3d\s?print|cut|build|use)/i,
-    /i('d like| would like) to (make|create|print|3d\s?print|cut|build)/i,
-    /help me (make|create|print|cut|build|use the)/i,
-    /get started (with|on)/i,
-    /where do i start/i,
+    /how (do|can|should) i (use|make|create|3d\s?print|print|cut|start|begin|do)\s+\w/i,
+    /how to (use|make|create|3d\s?print|print|cut|start)\s+\w/i,
+    /walk me through\s+\w/i,
+    /i want to (make|create|print|3d\s?print|cut|build|use)\s+\w/i,
+    /i('d like| would like) to (make|create|print|3d\s?print|cut|build)\s+\w/i,
+    /help me (make|create|print|cut|build)\s+\w/i,
+    /help me use the\s+\w/i,
+    /get started (with|on)\s+\w/i,
   ];
   return patterns.some(p => p.test(q));
 }
@@ -186,11 +188,13 @@ async function streamFromAPI(isFullGuide = false) {
         try {
           const { text } = JSON.parse(data);
           fullText += text;
-          contentEl.innerHTML = formatMarkdown(fullText);
+          contentEl.innerHTML = formatMarkdownStreaming(fullText);
           contentEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
         } catch {}
       }
     }
+    // Final render with actual video/image elements (avoids flicker during streaming)
+    contentEl.innerHTML = formatMarkdown(fullText);
 
     conversationHistory.push({ role: "assistant", content: fullText });
 
@@ -253,6 +257,12 @@ function printGuide(markdownText) {
   setTimeout(() => win.print(), 400);
 }
 
+function isFollowUpToClarification() {
+  const lastAssistant = [...conversationHistory].reverse().find(m => m.role === "assistant");
+  if (!lastAssistant) return false;
+  return /what (are you trying|would you like|do you want) to (make|print|cut|build|create)|what (machine|equipment)|have (a machine|something) in mind/i.test(lastAssistant.content);
+}
+
 async function askQuestion() {
   const question = questionInput.value.trim();
   if (!question) return;
@@ -261,12 +271,19 @@ async function askQuestion() {
   questionInput.value = "";
   questionInput.style.height = "auto";
 
-  if (isGuideRequest(question)) {
+  if (isGuideRequest(question) || isFollowUpToClarification()) {
     showGuideOptions(question);
   } else {
     conversationHistory.push({ role: "user", content: question });
     await streamFromAPI();
   }
+}
+
+function formatMarkdownStreaming(text) {
+  // Strip media tags to plain labels during streaming — prevents video flicker on every token
+  text = text.replace(/\[VIDEO:\s*https?:\/\/[^\s|]+\s*\|\s*([^\]]+)\]/g, '▶ $1');
+  text = text.replace(/\[IMAGE:\s*https?:\/\/[^\s|]+\s*\|\s*([^\]]+)\]/g, '🖼 $1');
+  return formatMarkdown(text);
 }
 
 function formatMarkdown(text) {

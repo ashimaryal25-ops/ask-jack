@@ -104,7 +104,13 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(400); res.end("Missing question");
           return;
         }
-        const embedding = await embedQuery(lastUserMsg);
+        // For short step-continuation messages ("next", "ok", etc.), retrieve using the
+        // last substantive query so the correct knowledge chunks (and video tags) come through
+        const isStepContinuation = /^(next|continue|ok|okay|done|got it|ready|yes|step \d+|go|proceed|yep|sure|next step)\.?$/i;
+        const retrievalQuery = isStepContinuation.test(lastUserMsg.trim())
+          ? ([...messages].reverse().find(m => m.role === "user" && !isStepContinuation.test(m.content.trim()))?.content || lastUserMsg)
+          : lastUserMsg;
+        const embedding = await embedQuery(retrievalQuery);
         const chunks = await retrieveChunks(embedding);
         await streamAnswer(messages, chunks, res);
       } catch (err) {
