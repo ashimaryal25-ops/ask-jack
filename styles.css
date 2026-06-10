@@ -493,6 +493,25 @@ textarea {
 
 textarea::placeholder { color: #bbb; }
 
+.mic-btn {
+  background: none;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mic-btn svg { width: 15px; height: 15px; stroke: #6b7280; }
+.mic-btn:hover { border-color: var(--orange); }
+.mic-btn:hover svg { stroke: var(--orange); }
+.mic-btn.listening { background: #fff0eb; border-color: var(--orange); animation: pulse 1s infinite; }
+.mic-btn.listening svg { stroke: var(--orange); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
 .send-btn {
   background: var(--orange);
   color: var(--white);

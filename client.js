@@ -1,11 +1,36 @@
 const questionInput = document.getElementById("questionInput");
 const askBtn = document.getElementById("askBtn");
+const micBtn = document.getElementById("micBtn");
 const chatThread = document.getElementById("chatThread");
 const loading = document.getElementById("loading");
 const welcomeSection = document.getElementById("welcomeSection");
 const newChatBtn = document.getElementById("newChatBtn");
 
 let conversationHistory = [];
+
+// ── Voice input ──
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (e) => {
+    questionInput.value = e.results[0][0].transcript;
+    questionInput.dispatchEvent(new Event("input")); // trigger auto-resize
+    micBtn.classList.remove("listening");
+  };
+  recognition.onspeechend = () => recognition.stop();
+  recognition.onerror = () => micBtn.classList.remove("listening");
+
+  micBtn.addEventListener("click", () => {
+    micBtn.classList.toggle("listening");
+    micBtn.classList.contains("listening") ? recognition.start() : recognition.stop();
+  });
+} else {
+  micBtn.style.display = "none"; // hide if browser doesn't support it
+}
 
 newChatBtn.addEventListener("click", () => {
   conversationHistory = [];
