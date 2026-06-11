@@ -75,8 +75,8 @@ askBtn.addEventListener("click", askQuestion);
 // ── Detect guide-type requests ──
 function isGuideRequest(query) {
   const q = query.toLowerCase().trim();
-  // Don't intercept troubleshooting queries
-  if (/error|fix|broken|not working|failed|stuck|wrong|issue|problem|clog/i.test(q)) return false;
+  // Don't intercept troubleshooting or process-specific questions
+  if (/error|fix|broken|not working|failed|stuck|wrong|issue|problem|clog|remove|take off|peel|unstuck|detach/i.test(q)) return false;
   // Require a noun/object after the action verb — bare verbs like "how to print" go to
   // Jack for clarification first, then the guide selector fires on the follow-up
   const patterns = [
