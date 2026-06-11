@@ -159,6 +159,46 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Classify whether a reply to Jack's clarifying question names an actual task —
+  // replaces the regex blocklist that misfired on rants, greetings, and jokes
+  if (req.method === "POST" && req.url === "/api/classify") {
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
+    if (isRateLimited(ip)) {
+      res.writeHead(429); res.end("Too many requests — slow down");
+      return;
+    }
+    let body = "";
+    req.on("data", (d) => {
+      body += d;
+      if (body.length > 5000) { res.writeHead(413); res.end("Request too large"); req.destroy(); }
+    });
+    req.on("end", async () => {
+      try {
+        const { message } = JSON.parse(body);
+        if (typeof message !== "string" || !message.trim() || message.length > 1000) {
+          res.writeHead(400); res.end("Invalid message");
+          return;
+        }
+        const result = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: 'The user was just asked what they want to make and which machine they want to use in a college makerspace. Classify their reply. Answer YES if the reply names or describes a thing they want to make, print, cut, or build (e.g. "a phone stand", "keychain with my name", "3d print a dog"). Answer NO if it is anything else — a greeting, complaint, joke, question, or off-topic remark. Answer with exactly one word: YES or NO.' },
+            { role: "user", content: message },
+          ],
+          temperature: 0,
+          max_tokens: 3,
+        });
+        const isTask = /yes/i.test(result.choices[0]?.message?.content || "");
+        res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ isTask }));
+      } catch (err) {
+        console.error("Classify error:", err.code || err.message);
+        if (!res.headersSent) { res.writeHead(500); res.end("Server error"); }
+      }
+    });
+    return;
+  }
+
   // Serve static files
   let filePath = req.url === "/" ? "/index.html" : req.url.split("?")[0];
   filePath = path.join(__dirname, filePath);

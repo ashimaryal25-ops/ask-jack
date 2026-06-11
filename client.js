@@ -282,16 +282,26 @@ function printGuide(markdownText) {
   setTimeout(() => win.print(), 400);
 }
 
-function isFollowUpToClarification(query) {
+function lastAssistantAskedClarification() {
   const lastAssistant = [...conversationHistory].reverse().find(m => m.role === "assistant");
   if (!lastAssistant) return false;
-  if (!/what (are you trying|would you like|do you want) to (make|print|cut|build|create)|what (machine|equipment)|have (a machine|something) in mind/i.test(lastAssistant.content)) return false;
-  // Response must sound like a task — not a question, joke, or off-topic reply
-  const q = query.trim();
-  if (q.split(/\s+/).length < 2) return false; // single word = too vague
-  if (/\?$/.test(q)) return false; // asking another question
-  if (/^(lol|haha|idk|no|yes|nope|yep|who|what|why|how is|is he|are you)/i.test(q)) return false;
-  return true;
+  return /what (are you trying|would you like|do you want) to (make|print|cut|build|create)|what (machine|equipment)|have (a machine|something) in mind/i.test(lastAssistant.content);
+}
+
+// Ask the model whether the reply actually names a task — regex can't classify free text
+async function isTaskReply(query) {
+  try {
+    const res = await fetch("/api/classify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: query }),
+    });
+    if (!res.ok) return false;
+    const { isTask } = await res.json();
+    return isTask === true;
+  } catch {
+    return false; // on any failure just answer normally — never block the user
+  }
 }
 
 async function askQuestion() {
@@ -302,8 +312,18 @@ async function askQuestion() {
   questionInput.value = "";
   questionInput.style.height = "auto";
 
-  if (isGuideRequest(question) || isFollowUpToClarification(question)) {
+  if (isGuideRequest(question)) {
     showGuideOptions(question);
+  } else if (lastAssistantAskedClarification()) {
+    loading.hidden = false;
+    const task = await isTaskReply(question);
+    loading.hidden = true;
+    if (task) {
+      showGuideOptions(question);
+    } else {
+      conversationHistory.push({ role: "user", content: question });
+      await streamFromAPI();
+    }
   } else {
     conversationHistory.push({ role: "user", content: question });
     await streamFromAPI();
