@@ -199,6 +199,41 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Log thumbs up/down feedback on answers — testing-phase instrumentation
+  if (req.method === "POST" && req.url === "/api/feedback") {
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
+    if (isRateLimited(ip)) {
+      res.writeHead(429); res.end("Too many requests — slow down");
+      return;
+    }
+    let body = "";
+    req.on("data", (d) => {
+      body += d;
+      if (body.length > 100000) { res.writeHead(413); res.end("Request too large"); req.destroy(); }
+    });
+    req.on("end", async () => {
+      try {
+        const { question, answer, rating } = JSON.parse(body);
+        if (
+          !["up", "down"].includes(rating) ||
+          typeof question !== "string" || !question.trim() || question.length > 2000 ||
+          typeof answer !== "string" || !answer.trim() || answer.length > 20000
+        ) {
+          res.writeHead(400); res.end("Invalid feedback");
+          return;
+        }
+        const { error } = await supabase.from("feedback").insert({ question, answer, rating });
+        if (error) throw new Error(error.message);
+        res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        console.error("Feedback error:", err.code || err.message);
+        if (!res.headersSent) { res.writeHead(500); res.end("Server error"); }
+      }
+    });
+    return;
+  }
+
   // Serve static files
   let filePath = req.url === "/" ? "/index.html" : req.url.split("?")[0];
   filePath = path.join(__dirname, filePath);

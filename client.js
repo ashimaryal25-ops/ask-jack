@@ -108,7 +108,11 @@ function appendAssistantBubble() {
   wrapper.innerHTML = `
     <div class="answer-header">
       <div class="assistant-tag"><span class="dot"></span>Jack</div>
-      <button class="copy-btn" type="button">Copy</button>
+      <div class="answer-actions">
+        <button class="fb-btn fb-up" type="button" title="Helpful" hidden>&#128077;</button>
+        <button class="fb-btn fb-down" type="button" title="Not helpful" hidden>&#128078;</button>
+        <button class="copy-btn" type="button">Copy</button>
+      </div>
     </div>
     <div class="answer-content"></div>
   `;
@@ -120,6 +124,25 @@ function appendAssistantBubble() {
   });
   chatThread.appendChild(wrapper);
   return { contentEl: wrapper.querySelector(".answer-content"), wrapperEl: wrapper };
+}
+
+// Reveal and wire the thumbs once the full answer exists
+function enableFeedback(wrapperEl, question, answer) {
+  const up = wrapperEl.querySelector(".fb-up");
+  const down = wrapperEl.querySelector(".fb-down");
+  if (!up || !down) return;
+  up.hidden = down.hidden = false;
+  const send = (rating, btn) => {
+    up.disabled = down.disabled = true;
+    btn.classList.add("selected");
+    fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, answer, rating }),
+    }).catch(() => {}); // feedback is best-effort, never bother the student
+  };
+  up.addEventListener("click", () => send("up", up));
+  down.addEventListener("click", () => send("down", down));
 }
 
 // ── Show guide mode options ──
@@ -220,6 +243,9 @@ async function streamFromAPI(isFullGuide = false) {
     }
     // Final render with actual video/image elements (avoids flicker during streaming)
     contentEl.innerHTML = formatMarkdown(fullText);
+
+    const lastQuestion = [...conversationHistory].reverse().find(m => m.role === "user")?.content || "";
+    enableFeedback(wrapperEl, lastQuestion, fullText);
 
     conversationHistory.push({ role: "assistant", content: fullText });
 

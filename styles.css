@@ -381,6 +381,26 @@ html, body {
 
 .copy-btn:hover { color: var(--text); border-color: #bbb; }
 
+.answer-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fb-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+  line-height: 1.4;
+}
+.fb-btn:hover { border-color: var(--orange); background: #fff7f3; }
+.fb-btn:disabled { cursor: default; opacity: 0.45; }
+.fb-btn.selected { border-color: var(--orange); background: #fff0eb; opacity: 1; }
+
 .answer-content {
   padding: 16px 20px;
   font-size: 13.5px;
