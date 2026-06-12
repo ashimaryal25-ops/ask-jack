@@ -23,7 +23,7 @@ function parseMetadata(content, filename) {
   };
 }
 
-function chunkText(text, maxChars = 1500) {
+function chunkText(text, maxChars = 2000) {
   const paragraphs = text.split(/\n{2,}/);
   const chunks = [];
   let current = "";

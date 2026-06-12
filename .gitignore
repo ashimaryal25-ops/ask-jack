@@ -2,3 +2,6 @@
 node_modules/
 .claude/
 *.docx
+research-ideas.md
+improvements.md
+unpacked_fixlog/
