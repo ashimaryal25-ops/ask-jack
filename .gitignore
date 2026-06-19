@@ -5,3 +5,5 @@ node_modules/
 research-ideas.md
 improvements.md
 unpacked_fixlog/
+make-docs.js
+query.js
