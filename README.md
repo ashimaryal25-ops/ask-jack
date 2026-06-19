@@ -16,6 +16,8 @@ It is **not a ChatGPT wrapper.** Every answer is grounded in a custom knowledge 
 
 It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg College alumnus whose philanthropy made the lab possible.
 
+> **Current scope:** Jack supports the lab's 3D printing (Ender 3 V3 KE) today. Support for the ICL's other machines is on the roadmap.
+
 ---
 
 ## Features
