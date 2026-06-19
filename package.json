@@ -1,14 +1,23 @@
 {
-  "name": "rag_icl",
+  "name": "jack-makerspace-assistant",
   "version": "1.0.0",
-  "description": "",
+  "description": "Jack — an independent RAG assistant that guides beginners through makerspace equipment step by step, made for students at Gettysburg College's Rogers Center for Innovation & Creativity.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "ingest": "node ingest.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "rag",
+    "retrieval-augmented-generation",
+    "openai",
+    "pgvector",
+    "supabase",
+    "embeddings",
+    "makerspace",
+    "chatbot"
+  ],
+  "author": "Ashim Aryal",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
