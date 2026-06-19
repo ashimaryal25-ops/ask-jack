@@ -8,9 +8,11 @@
 ![Railway](https://img.shields.io/badge/Deployed_on_Railway-0B0D0E?style=flat&logo=railway&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/Vanilla_JS-F7DF1E?style=flat&logo=javascript&logoColor=black)
 
+### 🔗 Live: [iclassistant.up.railway.app](https://iclassistant.up.railway.app)
+
 **Jack** is an AI assistant built for the Innovation & Creativity Lab (ICL) at Gettysburg College. Students ask a question in plain English — *"how do I 3D print a phone stand?"* — and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
 
-It is **not a ChatGPT wrapper.** Every answer is grounded in a custom knowledge base of ICL-specific documentation through a real Retrieval-Augmented Generation (RAG) pipeline — so Jack answers from the lab's actual procedures and says "I don't have that yet" instead of hallucinating when it doesn't know.
+It is **not a ChatGPT wrapper.** Every answer is grounded in a custom knowledge base of ICL-specific documentation through an agentic Retrieval-Augmented Generation (RAG) pipeline — so Jack answers from the lab's actual procedures and says "I don't have that yet" instead of hallucinating when it doesn't know.
 
 It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg College alumnus whose philanthropy made the lab possible.
 
@@ -18,6 +20,7 @@ It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg 
 
 ## Features
 
+- **Agentic retrieval** — Jack plans its own search query from the conversation, grades whether the retrieved chunks actually answer it, and reformulates with a fresh search if they fall short, then generates a grounded answer
 - **Grounded RAG answers** — responses come only from the ICL knowledge base, not the model's training data
 - **Two guide modes** — a full walkthrough all at once, or one step at a time at the student's pace
 - **Inline media** — videos and photos of the real lab equipment render directly inside the steps
@@ -26,6 +29,7 @@ It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg 
 - **Save as PDF** — export a full guide as a printable sheet to take to the machine
 - **Intent classification** — detects when a vague request should branch into a guided walkthrough
 - **Feedback logging** — 👍/👎 on each answer, stored for measuring real-world helpfulness
+- **Automated evaluation** — a property-based harness fires real scenarios through the pipeline and checks grounding, refusal, and step-continuation behavior
 - **Hardened endpoints** — per-IP rate limiting, request-size caps, and path-traversal protection
 - **Streaming responses** — answers stream in word-by-word over Server-Sent Events
 
@@ -35,7 +39,7 @@ It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg 
 
 Jack runs a two-phase RAG pipeline.
 
-**Phase 1 — Ingestion** (`ingest.js`, run once when docs change):
+**Phase 1 — Ingestion** (run once when docs change):
 
 ```mermaid
 flowchart LR
@@ -44,19 +48,38 @@ flowchart LR
   C --> D[(Supabase pgvector)]
 ```
 
-**Phase 2 — Query** (`server.js`, every student message):
+**Phase 2 — Agentic retrieval** (every student message):
+
+Rather than blindly embedding the raw message, an agent decides *what* to search for, checks whether the results are good enough, and self-corrects before answering:
 
 ```mermaid
 flowchart LR
-  A[Student question] --> B[Embed the question]
-  B --> C[pgvector cosine search]
-  C --> D[Top-8 relevant chunks]
-  D --> E[Inject into system prompt]
-  E --> F[gpt-4o-mini · streaming]
+  A[Student question] --> B[Plan: LLM writes a focused query]
+  B --> C[Embed + pgvector cosine search]
+  C --> D{Grade: do the chunks answer it?}
+  D -->|yes| F[Inject into prompt<br/>gpt-4o-mini · streaming]
+  D -->|no| E[Reformulate query]
+  E --> C
   F --> G[SSE → word-by-word in the browser]
 ```
 
+- **Plan** — an LLM turns the conversation into one focused query, so a bare *"next"* mid-walkthrough becomes *"slicing a model in Cura"* instead of a meaningless search.
+- **Grade** — a second LLM call judges whether the retrieved chunks actually cover the query.
+- **Correct** — if they miss, the agent reformulates and searches again; if retrieval still comes up empty, Jack says it doesn't know rather than inventing an answer.
+
 The knowledge base is plain Markdown, so adding a new machine is just writing a new doc and re-running ingestion — no code changes. Media is embedded with simple `[VIDEO: url | title]` and `[IMAGE: url | caption]` tags that the frontend renders into players and images.
+
+---
+
+## Evaluation
+
+LLM output is non-deterministic, so the test harness checks **properties** of the responses rather than exact strings. It fires a fixed set of scenarios through the live pipeline and verifies each one:
+
+- **Grounding / refusal** — out-of-domain questions are declined, not hallucinated
+- **Step continuation** — a mid-walkthrough *"next"* advances to the correct step
+- **Troubleshooting, FAQ, safety, identity** — the right information surfaces
+
+Current suite: **12/12 passing**, with per-case latency reported.
 
 ---
 
@@ -76,34 +99,13 @@ The knowledge base is plain Markdown, so adding a new machine is just writing a 
 ## Project structure
 
 ```
-server.js                # backend: RAG pipeline, streaming, API endpoints
+server.js                # backend: agentic RAG pipeline, streaming, API endpoints
 client.js                # frontend: chat UI, guide modes, media rendering
 index.html / styles.css  # the interface
 ingest.js                # builds the vector knowledge base from Markdown
+eval.mjs                 # automated evaluation harness (property-based tests)
 knowledge_base/          # the ICL documentation (one Markdown file per topic)
 ```
-
----
-
-## Running locally
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Add a .env file with your keys
-#    SUPABASE_URL=...
-#    SUPABASE_SECRET_KEY=...
-#    OPENAI_API_KEY=...
-
-# 3. Build the knowledge base (embeds the Markdown docs into Supabase)
-node ingest.js
-
-# 4. Start the server
-npm start          # → http://localhost:3000
-```
-
-A Supabase table `knowledge_chunks` with a `match_knowledge_chunks` similarity RPC is required (pgvector).
 
 ---
 
