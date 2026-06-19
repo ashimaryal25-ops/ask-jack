@@ -39,6 +39,72 @@ async function retrieveChunks(embedding) {
   return data;
 }
 
+// ─────────────────────────────────────────────────────────────
+// AGENTIC RETRIEVAL  (plan → retrieve → grade → correct → answer)
+// Instead of blindly embedding the user's raw last message, an agent
+// decides what to search for, checks whether the results are good
+// enough, and reformulates once if they are not.
+// ─────────────────────────────────────────────────────────────
+
+// Step 1 — PLAN: turn the conversation into one focused search query.
+// Resolves context like "next" or "it" that the raw message can't express.
+async function planQuery(messages, hint = "") {
+  const recent = messages.slice(-6).map((m) => `${m.role}: ${m.content}`).join("\n");
+  const res = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You convert a makerspace help conversation into ONE concise search query for a knowledge base about lab equipment (3D printer, etc.). Output ONLY the query text describing what the student needs information about right now. Resolve references like 'next', 'it', or 'that' using the conversation. If the student is mid-walkthrough and says 'next', describe the actual next topic. No quotes, no explanation." +
+          (hint ? " " + hint : ""),
+      },
+      { role: "user", content: recent },
+    ],
+    temperature: 0,
+    max_tokens: 40,
+  });
+  return res.choices[0]?.message?.content?.trim() || "";
+}
+
+// Step 3 — GRADE: do the retrieved snippets actually cover the query?
+async function gradeChunks(query, chunks) {
+  if (!chunks || chunks.length === 0) return false;
+  const snippets = chunks.map((c, i) => `[${i + 1}] ${c.content.slice(0, 300)}`).join("\n");
+  const res = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content:
+          "Decide whether the provided knowledge snippets contain enough information to answer the student's query. Answer with exactly one word: YES or NO.",
+      },
+      { role: "user", content: `Query: ${query}\n\nSnippets:\n${snippets}` },
+    ],
+    temperature: 0,
+    max_tokens: 3,
+  });
+  return /yes/i.test(res.choices[0]?.message?.content || "");
+}
+
+// Orchestrator — runs the full agentic loop and returns the chunks to answer from,
+// plus whether retrieval was judged grounded (so the prompt can be honest if not).
+async function agenticRetrieve(messages) {
+  const query = await planQuery(messages);
+  const chunks = await retrieveChunks(await embedQuery(query));
+  const grounded = await gradeChunks(query, chunks);
+  if (grounded) return { chunks, query, grounded: true, retried: false };
+
+  // CORRECT: one reformulation pass with a broader query before giving up.
+  const query2 = await planQuery(messages, "The first search missed. Rephrase more broadly using the machine name and the core action.");
+  if (query2 && query2.toLowerCase() !== query.toLowerCase()) {
+    const chunks2 = await retrieveChunks(await embedQuery(query2));
+    const grounded2 = await gradeChunks(query2, chunks2);
+    return { chunks: chunks2, query: query2, grounded: grounded2, retried: true };
+  }
+  return { chunks, query, grounded: false, retried: true };
+}
+
 async function streamAnswer(messages, chunks, res) {
   const context = chunks
     .map((c, i) => `[Source ${i + 1}: ${c.source_file}]\n${c.content}`)
@@ -133,14 +199,9 @@ const server = http.createServer(async (req, res) => {
           res.writeHead(400); res.end("Missing question");
           return;
         }
-        // For short step-continuation messages ("next", "ok", etc.), retrieve using the
-        // last substantive query so the correct knowledge chunks (and video tags) come through
-        const isStepContinuation = /^(next|continue|ok|okay|done|got it|ready|yes|step \d+|go|proceed|yep|sure|next step)\.?$/i;
-        const retrievalQuery = isStepContinuation.test(lastUserMsg.trim())
-          ? ([...messages].reverse().find(m => m.role === "user" && !isStepContinuation.test(m.content.trim()))?.content || lastUserMsg)
-          : lastUserMsg;
-        const embedding = await embedQuery(retrievalQuery);
-        const chunks = await retrieveChunks(embedding);
+        // Agentic retrieval: plan the search query, grade the results, and
+        // reformulate once if they miss. Replaces the old raw-message + regex approach.
+        const { chunks } = await agenticRetrieve(messages);
         await streamAnswer(messages, chunks, res);
       } catch (err) {
         console.error("Request error:", err.code || err.message);
