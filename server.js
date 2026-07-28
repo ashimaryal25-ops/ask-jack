@@ -39,6 +39,43 @@ async function retrieveChunks(embedding) {
   return data;
 }
 
+function getAllowedMediaTags(chunks) {
+  const tags = new Set();
+  const mediaTag = /\[(?:VIDEO|IMAGE):\s*https?:\/\/[^\s|]+\s*\|\s*[^\]]+\]/g;
+  for (const chunk of chunks) {
+    const matches = chunk.content.match(mediaTag) || [];
+    matches.forEach((tag) => tags.add(tag));
+  }
+  return tags;
+}
+
+function sanitizeMediaTags(answer, allowedTags) {
+  const mediaTag = /\[(?:VIDEO|IMAGE):\s*https?:\/\/[^\s|]+\s*\|\s*[^\]]+\]/g;
+  let removedTag = false;
+  const sanitized = answer
+    .split(/\n{2,}/)
+    .map((paragraph) => {
+      let stripped = false;
+      const next = paragraph.replace(mediaTag, (tag) => {
+        if (allowedTags.has(tag)) return tag;
+        stripped = true;
+        removedTag = true;
+        return "";
+      }).trim();
+
+      if (stripped && /video|image|link|watch/i.test(next) && next.length < 220) {
+        return "";
+      }
+      return next;
+    })
+    .filter(Boolean)
+    .join("\n\n");
+
+  return removedTag && !sanitized.trim()
+    ? "I don't have a verified ICL video or image for that yet. Please ask ICL staff for the right resource."
+    : sanitized;
+}
+
 async function streamAnswer(messages, chunks, res) {
   const context = chunks
     .map((c, i) => `[Source ${i + 1}: ${c.source_file}]\n${c.content}`)
@@ -55,7 +92,7 @@ Exception: if the question is about a standard tool, accessory, or consumable th
 RULE 1b — MEDIA TAGS (CRITICAL): The knowledge base may contain tags like:
   [VIDEO: https://... | Title here]
   [IMAGE: https://... | Caption here]
-When you see one of these tags in the knowledge base and it is relevant to the step you are explaining, you MUST copy it character-for-character into your response at that step. Do not convert it to a markdown link. Do not write "watch the video here", "here is the link", "here is the image", or "refer to the following video". Do not describe it or introduce it. Just paste the full raw tag exactly as it appears, inline with your text, including the brackets, colon, pipe, and URL. Example — if the knowledge base has:
+When you see one of these tags in the knowledge base and it is relevant to the step you are explaining, you MUST copy it character-for-character into your response at that step. Do not convert it to a markdown link. Do not write "watch the video here", "here is the link", "here is the image", or "refer to the following video". Do not describe it or introduce it. Just paste the full raw tag exactly as it appears, inline with your text, including the brackets, colon, pipe, and URL. Never create, infer, guess, or use any URL that is not present as an exact media tag in the KNOWLEDGE BASE below. If the student asks for a video or image and no relevant media tag appears in the retrieved knowledge base, say you don't have a verified ICL video or image for that yet. Example — if the knowledge base has:
   [VIDEO: https://example.com/video.mp4 | How to do X]
 Your response at that step must include the exact string:
   [VIDEO: https://example.com/video.mp4 | How to do X]
@@ -95,10 +132,13 @@ ${context}`;
     "Access-Control-Allow-Origin": "*",
   });
 
+  let fullAnswer = "";
   for await (const chunk of stream) {
     const text = chunk.choices[0]?.delta?.content || "";
-    if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+    if (text) fullAnswer += text;
   }
+  const safeAnswer = sanitizeMediaTags(fullAnswer, getAllowedMediaTags(chunks));
+  if (safeAnswer) res.write(`data: ${JSON.stringify({ text: safeAnswer })}\n\n`);
   res.write("data: [DONE]\n\n");
   res.end();
 }
@@ -154,6 +194,49 @@ const server = http.createServer(async (req, res) => {
             res.end();
           } catch {}
         }
+      }
+    });
+    return;
+  }
+
+  if (req.method === "POST" && req.url === "/api/feedback") {
+    const ip = req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
+    if (isRateLimited(ip)) {
+      res.writeHead(429); res.end("Too many requests — slow down");
+      return;
+    }
+    let body = "";
+    req.on("data", (d) => {
+      body += d;
+      if (body.length > 100000) { res.writeHead(413); res.end("Request too large"); req.destroy(); }
+    });
+    req.on("end", async () => {
+      try {
+        const { rating, question, answer, conversation } = JSON.parse(body);
+        if (!["helpful", "unhelpful"].includes(rating)) {
+          res.writeHead(400); res.end("Invalid rating");
+          return;
+        }
+        if (typeof question !== "string" || typeof answer !== "string") {
+          res.writeHead(400); res.end("Invalid feedback payload");
+          return;
+        }
+
+        const { error } = await supabase.from("feedback").insert({
+          rating,
+          question: question.slice(0, 5000),
+          answer: answer.slice(0, 20000),
+          conversation: Array.isArray(conversation) ? conversation.slice(-20) : [],
+          user_agent: req.headers["user-agent"] || null,
+          ip_address: ip,
+        });
+
+        if (error) throw new Error(error.message);
+        res.writeHead(200, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (err) {
+        console.error("Feedback error:", err.code || err.message);
+        if (!res.headersSent) { res.writeHead(500); res.end("Server error"); }
       }
     });
     return;

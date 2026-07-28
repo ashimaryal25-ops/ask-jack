@@ -180,6 +180,8 @@ function showGuideOptions(originalQuery) {
 async function streamFromAPI(isFullGuide = false) {
   askBtn.disabled = true;
   loading.hidden = false;
+  const questionForFeedback = [...conversationHistory].reverse().find(m => m.role === "user")?.content || "";
+  const conversationForFeedback = conversationHistory.slice();
 
   try {
     const res = await fetch("/api/ask", {
@@ -222,6 +224,11 @@ async function streamFromAPI(isFullGuide = false) {
     contentEl.innerHTML = formatMarkdown(fullText);
 
     conversationHistory.push({ role: "assistant", content: fullText });
+    attachFeedbackControls(wrapperEl, {
+      question: questionForFeedback,
+      answer: fullText,
+      conversation: conversationForFeedback,
+    });
 
     // Add download button only for full guide responses that actually contain multiple steps
     const hasMultipleSteps = /step\s*[23456789]/i.test(fullText) || (fullText.match(/\n\d+\./g) || []).length >= 3;
@@ -233,6 +240,8 @@ async function streamFromAPI(isFullGuide = false) {
       wrapperEl.appendChild(dlBtn);
     }
 
+    wrapperEl.scrollIntoView({ behavior: "smooth", block: "end" });
+
   } catch (err) {
     loading.hidden = true;
     const { contentEl } = appendAssistantBubble();
@@ -242,6 +251,47 @@ async function streamFromAPI(isFullGuide = false) {
     askBtn.disabled = false;
     loading.hidden = true;
   }
+}
+
+function attachFeedbackControls(wrapperEl, payload) {
+  const feedback = document.createElement("div");
+  feedback.className = "feedback-row";
+  feedback.innerHTML = `
+    <span class="feedback-label">Was this response useful?</span>
+    <button class="feedback-btn" type="button" data-rating="helpful">Helpful</button>
+    <button class="feedback-btn" type="button" data-rating="unhelpful">Not helpful</button>
+    <span class="feedback-status" aria-live="polite"></span>
+  `;
+
+  feedback.querySelectorAll(".feedback-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const rating = btn.dataset.rating;
+      const status = feedback.querySelector(".feedback-status");
+      feedback.querySelectorAll(".feedback-btn").forEach((b) => {
+        b.disabled = true;
+        b.classList.toggle("selected", b === btn);
+      });
+      status.textContent = "Saving...";
+
+      try {
+        const res = await fetch("/api/feedback", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, rating }),
+        });
+        if (!res.ok) throw new Error("Feedback save failed");
+        status.textContent = "Thanks, saved.";
+      } catch {
+        status.textContent = "Could not save.";
+        feedback.querySelectorAll(".feedback-btn").forEach((b) => {
+          b.disabled = false;
+          b.classList.remove("selected");
+        });
+      }
+    });
+  });
+
+  wrapperEl.appendChild(feedback);
 }
 
 function printGuide(markdownText) {
