@@ -5,9 +5,32 @@ const path = require("path");
 const { createClient } = require("@supabase/supabase-js");
 const OpenAI = require("openai");
 
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+
+const requiredEnv = {
+  OPENAI_API_KEY: Boolean(process.env.OPENAI_API_KEY),
+  SUPABASE_URL: Boolean(process.env.SUPABASE_URL),
+  NEXT_PUBLIC_SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+  SUPABASE_SECRET_KEY: Boolean(process.env.SUPABASE_SECRET_KEY),
+  SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+  SUPABASE_KEY: Boolean(process.env.SUPABASE_KEY),
+};
+console.log("Environment check:", requiredEnv);
+
+if (!supabaseUrl) {
+  throw new Error("Missing Supabase URL. Set SUPABASE_URL in Railway service variables.");
+}
+if (!supabaseKey) {
+  throw new Error("Missing Supabase service key. Set SUPABASE_SECRET_KEY in Railway service variables.");
+}
+if (!process.env.OPENAI_API_KEY) {
+  throw new Error("Missing OpenAI API key. Set OPENAI_API_KEY in Railway service variables.");
+}
+
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SECRET_KEY
+  supabaseUrl,
+  supabaseKey
 );
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
