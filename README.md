@@ -10,9 +10,9 @@
 
 ### 🔗 Live: [iclassistant.up.railway.app](https://iclassistant.up.railway.app)
 
-**Jack** is an independent project I built to help students at Gettysburg College's Innovation & Creativity Lab (ICL) use makerspace equipment on their own. Students ask a question in plain English — *"how do I 3D print a phone stand?"* — and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
+**Jack** is an independent project I built to help students use makerspace equipment on their own. Students ask a question in plain English — *"how do I 3D print a phone stand?"* — and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
 
-It is **not a ChatGPT wrapper.** Every answer is grounded in a custom knowledge base of ICL-specific documentation through a real Retrieval-Augmented Generation (RAG) pipeline — so Jack answers from the lab's actual procedures and says "I don't have that yet" instead of hallucinating when it doesn't know.
+Every answer is grounded in a custom knowledge base of ICL-specific documentation through a real Retrieval-Augmented Generation (RAG) pipeline — so Jack answers from the lab's actual procedures and says "I don't have that yet" instead of hallucinating when it doesn't know.
 
 It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg College alumnus whose philanthropy made the lab possible.
 
@@ -87,6 +87,3 @@ The knowledge base is plain Markdown, so adding a new machine is just writing a 
 
 ---
 
-## About
-
-An independent project by Ashim Aryal, built to help students at Gettysburg College's Rogers Center for Innovation & Creativity.
