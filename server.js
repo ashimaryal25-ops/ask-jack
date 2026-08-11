@@ -53,6 +53,42 @@ async function embedQuery(text) {
   return res.data[0].embedding;
 }
 
+// LLM query expansion (improvements.md §6) — rewrites the recent conversation into a
+// single focused retrieval query so search covers what the student actually needs next,
+// instead of embedding the raw message. Off by default; enable with QUERY_EXPANSION=1.
+// Falls back to the passed-in query on any failure or empty output — no regression when off.
+const QUERY_EXPANSION = process.env.QUERY_EXPANSION === "1";
+
+async function expandQuery(messages, fallback) {
+  if (!QUERY_EXPANSION) return fallback;
+  try {
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You rewrite a makerspace student's request into ONE short search query for a " +
+            "documentation database. Name the machine, the specific step or action, and any " +
+            "tool or material involved. Use the conversation only for context — describe just " +
+            "what the student needs next. Output only the query, no quotes or explanation.",
+        },
+        ...messages.slice(-6),
+      ],
+      max_tokens: 60,
+      temperature: 0,
+    });
+    const expanded = res.choices[0]?.message?.content?.trim();
+    if (expanded && expanded !== fallback) {
+      console.log(`Query expansion: "${fallback}" -> "${expanded}"`);
+    }
+    return expanded || fallback;
+  } catch (err) {
+    console.error("Query expansion failed, using raw query:", err.code || err.message);
+    return fallback;
+  }
+}
+
 async function retrieveChunks(embedding) {
   const { data, error } = await supabase.rpc("match_knowledge_chunks", {
     query_embedding: embedding,
@@ -199,9 +235,11 @@ const server = http.createServer(async (req, res) => {
         // For short step-continuation messages ("next", "ok", etc.), retrieve using the
         // last substantive query so the correct knowledge chunks (and video tags) come through
         const isStepContinuation = /^(next|continue|ok|okay|done|got it|ready|yes|step \d+|go|proceed|yep|sure|next step)\.?$/i;
-        const retrievalQuery = isStepContinuation.test(lastUserMsg.trim())
+        const baseQuery = isStepContinuation.test(lastUserMsg.trim())
           ? ([...messages].reverse().find(m => m.role === "user" && !isStepContinuation.test(m.content.trim()))?.content || lastUserMsg)
           : lastUserMsg;
+        // Layer LLM expansion on top of the anchor-swap; baseQuery is the fallback (improvements.md §6)
+        const retrievalQuery = await expandQuery(messages, baseQuery);
         const embedding = await embedQuery(retrievalQuery);
         const chunks = await retrieveChunks(embedding);
         await streamAnswer(messages, chunks, res);
