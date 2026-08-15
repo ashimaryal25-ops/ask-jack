@@ -92,30 +92,26 @@ async function expandQuery(messages, fallback) {
 async function retrieveChunks(embedding, section = "general") {
   const { data, error } = await supabase.rpc("match_knowledge_chunks", {
     query_embedding: embedding,
-    match_count: 12,
+    match_count: 20,
   });
   if (error) throw new Error(error.message);
 
   if (section === "3d-printing") {
-    // Prioritize 3D printing documentation + general lab context
-    const printChunks = data.filter((c) =>
-      c.source_file.startsWith("ender3-") || c.category.includes("3d-printing") || c.source_file.startsWith("general-")
-    );
-    const otherChunks = data.filter((c) =>
-      !c.source_file.startsWith("ender3-") && !c.category.includes("3d-printing") && !c.source_file.startsWith("general-")
-    );
-    return [...printChunks, ...otherChunks].slice(0, 8);
+    // Strict: only 3D printing docs + lab-wide general docs. No other-machine chunks.
+    return data
+      .filter((c) =>
+        c.source_file.startsWith("ender3-") || c.category.includes("3d-printing") || c.source_file.startsWith("general-")
+      )
+      .slice(0, 8);
   } else if (section === "embroidery") {
-    // Prioritize Embroidery documentation + general lab context
-    const embChunks = data.filter((c) =>
-      c.source_file.startsWith("embroidery-") || c.category.includes("embroidery") || c.source_file.startsWith("general-")
-    );
-    const otherChunks = data.filter((c) =>
-      !c.source_file.startsWith("embroidery-") && !c.category.includes("embroidery") && !c.source_file.startsWith("general-")
-    );
-    return [...embChunks, ...otherChunks].slice(0, 8);
+    // Strict: only embroidery docs + lab-wide general docs. No other-machine chunks.
+    return data
+      .filter((c) =>
+        c.source_file.startsWith("embroidery-") || c.category.includes("embroidery") || c.source_file.startsWith("general-")
+      )
+      .slice(0, 8);
   } else {
-    // General section has full, unrestricted access to all knowledge chunks
+    // General section has full, unrestricted access to every knowledge chunk
     return data.slice(0, 8);
   }
 }
@@ -162,14 +158,26 @@ async function streamAnswer(messages, chunks, section, res) {
     .map((c, i) => `[Source ${i + 1}: ${c.source_file}]\n${c.content}`)
     .join("\n\n---\n\n");
 
+  const workspaceScope = {
+    general:
+      "GENERAL LAB workspace. You may answer questions about ANY lab topic or machine — 3D printing, embroidery, safety, access, software, and tools.",
+    "3d-printing":
+      "3D PRINTING workspace (Ender 3 V3 KE & CR-M4). Answer 3D printing questions and general lab questions (access, safety, policies). If the user asks about EMBROIDERY or the Janome machine, do NOT answer it here — in one friendly sentence, tell them to switch to the Embroidery workspace using the sidebar on the left.",
+    embroidery:
+      "EMBROIDERY workspace (Janome Memory Craft 550E). Answer embroidery questions and general lab questions (access, safety, policies). If the user asks about 3D PRINTING or the Ender/Creality printers, do NOT answer it here — in one friendly sentence, tell them to switch to the 3D Printing workspace using the sidebar on the left.",
+  }[section] || "GENERAL LAB workspace. You may answer questions about any lab topic or machine.";
+
   const systemPrompt = `You are Jack, the AI assistant for the Innovation & Creativity Lab (ICL) at Gettysburg College. You help students use lab equipment step-by-step — clear, direct, no fluff.
 You remember the full conversation and refer back to earlier messages when relevant.
 If asked who made you or who built you: you were built by the ICL team at Gettysburg College to help students make things even when no instructor is around. You are powered by AI.
 If asked why your name is Jack, or who Jack is: explain that you are named after Clarence B. "Jack" Rogers Jr., class of 1951 — a Gettysburg College alumnus whose vision and philanthropy made this lab possible. He was a trailblazer in the technology industry and one of the College's most dedicated supporters. It felt right to name the lab's AI assistant after him.
 
+ACTIVE WORKSPACE: ${workspaceScope}
+
 RULE 1 — GROUNDING:
 Answer using ONLY the KNOWLEDGE BASE below and the conversation so far. Do not use outside or general knowledge for anything that is not the ICL's lab equipment or making a project in the lab. Never mention the knowledge base, section titles, file names, or that you are reading from any document. Just answer naturally as if you know it.
-- If the question is about 3D printing (Ender 3 V3 KE, CR-M4, Creality Print, Cura, filament, leveling, slicing), embroidery (Janome MC550E, Artistic Digitizer, VinylMasterCut, hooping, stabilizers, threading, bobbin), or general lab policies/access: ALWAYS answer the question directly, thoroughly, and step-by-step. Never tell the user they are in the wrong workspace or refuse to answer valid lab equipment questions.
+- If the question is within the ACTIVE WORKSPACE scope above (this workspace's machine, or general lab access/safety/policies): answer directly, thoroughly, and step-by-step.
+- If the question is about a lab machine that belongs to a DIFFERENT workspace: do NOT answer it here. In one friendly sentence, tell the user to switch to that machine's workspace using the sidebar. Do this even if you think you know the answer.
 - If the student asks about equipment NOT in the knowledge base (e.g. laser cutter, CNC router, resin 3D printer, wood lathe, Cricut, soldering iron): honestly state that you don't have training data for that specific equipment yet, name it specifically, and direct them to ICL staff (Josh or Eric).
 
 RULE 1b — MEDIA TAGS (MANDATORY & CRITICAL):
