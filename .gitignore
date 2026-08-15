@@ -5,3 +5,10 @@ node_modules/
 research-ideas.md
 improvements.md
 unpacked_fixlog/
+
+# Local media source (images/videos are served from Supabase, not the repo)
+embroidery_images/
+media/
+docs/embroidery/
+scratch/
+scratch_*.png
