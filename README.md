@@ -8,7 +8,7 @@
 ![Railway](https://img.shields.io/badge/Deployed_on_Railway-0B0D0E?style=flat&logo=railway&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/Vanilla_JS-F7DF1E?style=flat&logo=javascript&logoColor=black)
 
-### 🔗 Live: [iclassistant.up.railway.app](https://iclassistant.up.railway.app)
+### 🔗 Live: [ask-jack-production.up.railway.app](https://ask-jack-production.up.railway.app)
 
 **Jack** is an independent project I built to help students use makerspace equipment on their own. Students ask a question in plain English — *"how do I 3D print a phone stand?"* — and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
 
