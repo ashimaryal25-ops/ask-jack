@@ -620,11 +620,12 @@ function formatMarkdown(text) {
   html = html.replace(/^#\s+(.+)$/gm, "<h3>$1</h3>");
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+  html = html.replace(/^\d+\.\s*$/gm, "");
   html = html.replace(/^(\d+)\.\s+(.+)$/gm, "<li>$2</li>");
-  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, "<ol>$1</ol>");
+  html = html.replace(/(?:<li>.*?<\/li>\s*)+/g, (m) => "<ol>" + m.trim() + "</ol>");
   html = html.replace(/^[-*]\s+(.+)$/gm, "<ul-item>$1</ul-item>");
-  html = html.replace(/((?:<ul-item>.*<\/ul-item>\n?)+)/g, (m) =>
-    "<ul>" + m.replace(/<ul-item>(.*?)<\/ul-item>/g, "<li>$1</li>") + "</ul>"
+  html = html.replace(/(?:<ul-item>.*?<\/ul-item>\s*)+/g, (m) =>
+    "<ul>" + m.trim().replace(/<ul-item>(.*?)<\/ul-item>/g, "<li>$1</li>") + "</ul>"
   );
   html = html
     .split("\n")
