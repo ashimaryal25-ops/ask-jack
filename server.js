@@ -89,18 +89,40 @@ async function expandQuery(messages, fallback) {
   }
 }
 
-async function retrieveChunks(embedding) {
+async function retrieveChunks(embedding, section = "general") {
   const { data, error } = await supabase.rpc("match_knowledge_chunks", {
     query_embedding: embedding,
-    match_count: 8,
+    match_count: 12,
   });
   if (error) throw new Error(error.message);
-  return data;
+
+  if (section === "3d-printing") {
+    // Prioritize 3D printing documentation + general lab context
+    const printChunks = data.filter((c) =>
+      c.source_file.startsWith("ender3-") || c.category.includes("3d-printing") || c.source_file.startsWith("general-")
+    );
+    const otherChunks = data.filter((c) =>
+      !c.source_file.startsWith("ender3-") && !c.category.includes("3d-printing") && !c.source_file.startsWith("general-")
+    );
+    return [...printChunks, ...otherChunks].slice(0, 8);
+  } else if (section === "embroidery") {
+    // Prioritize Embroidery documentation + general lab context
+    const embChunks = data.filter((c) =>
+      c.source_file.startsWith("embroidery-") || c.category.includes("embroidery") || c.source_file.startsWith("general-")
+    );
+    const otherChunks = data.filter((c) =>
+      !c.source_file.startsWith("embroidery-") && !c.category.includes("embroidery") && !c.source_file.startsWith("general-")
+    );
+    return [...embChunks, ...otherChunks].slice(0, 8);
+  } else {
+    // General section has full, unrestricted access to all knowledge chunks
+    return data.slice(0, 8);
+  }
 }
 
 function getAllowedMediaTags(chunks) {
   const tags = new Set();
-  const mediaTag = /\[(?:VIDEO|IMAGE):\s*https?:\/\/[^\s|]+\s*\|\s*[^\]]+\]/g;
+  const mediaTag = /\[(?:VIDEO|IMAGE):\s*(?:https?:\/\/[^\s|]+|\/[^\s|]+)\s*\|\s*[^\]]+\]/g;
   for (const chunk of chunks) {
     const matches = chunk.content.match(mediaTag) || [];
     matches.forEach((tag) => tags.add(tag));
@@ -109,7 +131,7 @@ function getAllowedMediaTags(chunks) {
 }
 
 function sanitizeMediaTags(answer, allowedTags) {
-  const mediaTag = /\[(?:VIDEO|IMAGE):\s*https?:\/\/[^\s|]+\s*\|\s*[^\]]+\]/g;
+  const mediaTag = /\[(?:VIDEO|IMAGE):\s*(?:https?:\/\/[^\s|]+|\/[^\s|]+)\s*\|\s*[^\]]+\]/g;
   let removedTag = false;
   const sanitized = answer
     .split(/\n{2,}/)
@@ -135,7 +157,7 @@ function sanitizeMediaTags(answer, allowedTags) {
     : sanitized;
 }
 
-async function streamAnswer(messages, chunks, res) {
+async function streamAnswer(messages, chunks, section, res) {
   const context = chunks
     .map((c, i) => `[Source ${i + 1}: ${c.source_file}]\n${c.content}`)
     .join("\n\n---\n\n");
@@ -145,16 +167,16 @@ You remember the full conversation and refer back to earlier messages when relev
 If asked who made you or who built you: you were built by the ICL team at Gettysburg College to help students make things even when no instructor is around. You are powered by AI.
 If asked why your name is Jack, or who Jack is: explain that you are named after Clarence B. "Jack" Rogers Jr., class of 1951 — a Gettysburg College alumnus whose vision and philanthropy made this lab possible. He was a trailblazer in the technology industry and one of the College's most dedicated supporters. It felt right to name the lab's AI assistant after him.
 
-RULE 1 — GROUNDING: Answer ONLY using the KNOWLEDGE BASE below. Never mention the knowledge base, section titles, file names, or that you are reading from any document. Just answer naturally as if you know it. Do not use outside knowledge for how-to instructions. If a student asks about a machine or process and the knowledge base has nothing on it, honestly say you don't have training data for that specific equipment yet, name it specifically (whatever they asked about), and tell them to ask ICL staff. Do NOT hardcode any machine name as an example — always refer to whatever the student actually asked about.
-Exception: if the question is about a standard tool, accessory, or consumable that is directly related to equipment already in the knowledge base (e.g. a scraper for removing 3D prints, a USB drive for the printer, filament types), you may use brief general practical knowledge to help — these are universal accessories, not machine-specific procedures. Keep answers short and practical.
+RULE 1 — GROUNDING:
+Answer using the KNOWLEDGE BASE below. Never mention the knowledge base, section titles, file names, or that you are reading from any document. Just answer naturally as if you know it.
+- If the question is about 3D printing (Ender 3 V3 KE, CR-M4, Creality Print, Cura, filament, leveling, slicing), embroidery (Janome MC550E, Artistic Digitizer, VinylMasterCut, hooping, stabilizers, threading, bobbin), or general lab policies/access: ALWAYS answer the question directly, thoroughly, and step-by-step. Never tell the user they are in the wrong workspace or refuse to answer valid lab equipment questions.
+- If the student asks about equipment NOT in the knowledge base (e.g. laser cutter, CNC router, resin 3D printer, wood lathe, Cricut, soldering iron): honestly state that you don't have training data for that specific equipment yet, name it specifically, and direct them to ICL staff (Josh or Eric).
 
-RULE 1b — MEDIA TAGS (CRITICAL): The knowledge base may contain tags like:
+RULE 1b — MEDIA TAGS (MANDATORY & CRITICAL):
+The knowledge base contains visual diagram and video tags like:
   [VIDEO: https://... | Title here]
   [IMAGE: https://... | Caption here]
-When you see one of these tags in the knowledge base and it is relevant to the step you are explaining, you MUST copy it character-for-character into your response at that step. Do not convert it to a markdown link. Do not write "watch the video here", "here is the link", "here is the image", or "refer to the following video". Do not describe it or introduce it. Just paste the full raw tag exactly as it appears, inline with your text, including the brackets, colon, pipe, and URL. Never create, infer, guess, or use any URL that is not present as an exact media tag in the KNOWLEDGE BASE below. If the student asks for a video or image and no relevant media tag appears in the retrieved knowledge base, say you don't have a verified ICL video or image for that yet. Example — if the knowledge base has:
-  [VIDEO: https://example.com/video.mp4 | How to do X]
-Your response at that step must include the exact string:
-  [VIDEO: https://example.com/video.mp4 | How to do X]
+Whenever a retrieved chunk in the KNOWLEDGE BASE contains an [IMAGE: ...] or [VIDEO: ...] tag that relates to the machine part, button location, screen interface, hooping, threading, or procedure being discussed (such as Thread Cutter / Operating Buttons diagram, Upper Threading, Needle Threader, Bobbin, or Hoops), you MUST include that exact tag in your response. NEVER omit relevant visual diagram cards. Paste the exact raw tag verbatim as it appears in the knowledge base, inline with your text. Never create or guess any URL that is not present in the retrieved chunks.
 
 RULE 1c — SKIP COMPLETED STEPS: If the student mentions they have already completed part of the process (e.g. "I already have the model", "I have the file ready", "the printer is already on"), skip those steps entirely. Start from where they actually are. Never repeat steps they told you they've done.
 
@@ -162,11 +184,10 @@ RULE 2 — TONE: Be clear, direct, and concise. Format answers as clean numbered
 
 RULE 3 — CLARIFICATION: If a student asks to diagnose a problem or fix an error but their query is too vague (e.g. "how do I fix the error code?"), do NOT guess. Ask for the missing details: "What's the exact error message on the screen, and which printer are you using?"
 
-RULE 4 — SHORT/INFORMAL QUERIES: If the query has enough context (e.g. "print dog", "make keychain", "3D print phone stand"), interpret it charitably and answer. If the query is a single vague word or phrase with no clear object or machine (e.g. just "print", "help", "start", "make something"), ask a short clarifying question like "Sure! What are you trying to make? And do you have a machine in mind — like the 3D printer, laser cutter, or something else?"
-IMPORTANT: RULE 4 only applies to equipment that exists in the knowledge base. If the student mentions a machine you have no knowledge of — even vaguely — do NOT ask clarifying questions. Apply RULE 1 immediately: say you don't have training data for that equipment yet and direct them to ICL staff. Asking clarifying questions about equipment you cannot help with wastes the student's time.
+RULE 4 — SHORT/INFORMAL QUERIES: If the query has enough context (e.g. "print dog", "make keychain", "3D print phone stand", "i meant for the 3d printer"), interpret it charitably in the context of the conversation and answer directly. If the query is a single vague word or phrase with no clear object or machine (e.g. just "print", "help", "start", "make something"), ask a short clarifying question.
 
 RULE 4b — STEP-BY-STEP MODE: When walking a student through steps one at a time:
-- If the student asks a question that relates to the current process but is not the next step (e.g. "what if the printer is already on?", "how do I remove my print?"), answer it fully and naturally, then end with "Whenever you're ready, let me know and I'll continue with the next step."
+- If the student asks a question that relates to the current process but is not the next step, answer it fully and naturally, then end with "Whenever you're ready, let me know and I'll continue with the next step."
 - When you have given the final step of the guide, conclude with "That's everything — you're all done! Let me know if anything went wrong or if you have questions." Do NOT ask for the next step after the final one.
 
 RULE 5 — SAFETY: If a student reports a physical injury (burn, cut, etc.), do NOT give medical advice. Immediately tell them to alert an ICL staff member or call campus health services. If they propose an unsafe hardware action, warn against it and give the safe alternative from the knowledge base.
@@ -222,7 +243,7 @@ const server = http.createServer(async (req, res) => {
     });
     req.on("end", async () => {
       try {
-        const { messages } = JSON.parse(body);
+        const { messages, section } = JSON.parse(body);
         if (!Array.isArray(messages) || messages.length > 100) {
           res.writeHead(400); res.end("Invalid messages");
           return;
@@ -241,8 +262,8 @@ const server = http.createServer(async (req, res) => {
         // Layer LLM expansion on top of the anchor-swap; baseQuery is the fallback (improvements.md §6)
         const retrievalQuery = await expandQuery(messages, baseQuery);
         const embedding = await embedQuery(retrievalQuery);
-        const chunks = await retrieveChunks(embedding);
-        await streamAnswer(messages, chunks, res);
+        const chunks = await retrieveChunks(embedding, section || "general");
+        await streamAnswer(messages, chunks, section || "general", res);
       } catch (err) {
         console.error("Request error:", err.code || err.message);
         if (!res.headersSent) {
@@ -351,8 +372,19 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(403); res.end("Forbidden");
     return;
   }
-  const ext = path.extname(filePath);
-  const mime = { ".html": "text/html", ".css": "text/css", ".js": "application/javascript" };
+  const ext = path.extname(filePath).toLowerCase();
+  const mime = {
+    ".html": "text/html",
+    ".css": "text/css",
+    ".js": "application/javascript",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+    ".mp4": "video/mp4",
+    ".json": "application/json",
+  };
   fs.readFile(filePath, (err, data) => {
     if (err) { res.writeHead(404); res.end("Not found"); return; }
     res.writeHead(200, { "Content-Type": mime[ext] || "text/plain" });

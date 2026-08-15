@@ -24,7 +24,7 @@ function parseMetadata(content, filename) {
 }
 
 function chunkText(text, maxChars = 2000) {
-  const paragraphs = text.split(/\n{2,}/);
+  const paragraphs = text.split(/\r?\n\s*\r?\n/);
   const chunks = [];
   let current = "";
 

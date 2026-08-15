@@ -153,7 +153,6 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  flex: 1;
 }
 
 .machine-item {
@@ -166,7 +165,7 @@ html, body {
   background: transparent;
   cursor: pointer;
   text-align: left;
-  transition: background 0.12s;
+  transition: background 0.12s, box-shadow 0.12s;
   width: 100%;
   font-family: inherit;
 }
@@ -174,6 +173,20 @@ html, body {
 .machine-item:hover { background: var(--bg); }
 .machine-item:hover .machine-icon { background: var(--orange); }
 .machine-item:hover .machine-icon svg { color: white; stroke: white; }
+
+.machine-item.active {
+  background: #fff5f0;
+}
+.machine-item.active .machine-icon {
+  background: var(--orange);
+}
+.machine-item.active .machine-icon svg {
+  color: white;
+  stroke: white;
+}
+.machine-item.active .machine-info strong {
+  color: var(--orange);
+}
 
 .machine-icon {
   width: 32px;
@@ -212,7 +225,7 @@ html, body {
 .sidebar-footer {
   padding: 12px 8px 0;
   border-top: 1px solid var(--border);
-  margin-top: 12px;
+  margin-top: auto;
 }
 
 .sidebar-footer a {
@@ -513,6 +526,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .loading {
@@ -729,17 +743,20 @@ textarea::placeholder { color: #bbb; }
 
 /* ── IMAGE CARD ── */
 .image-card {
-  margin: 12px -20px;
+  margin: 14px 0;
+  border-radius: var(--radius);
   overflow: hidden;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border);
+  background: #ffffff;
 }
 
 .image-card img {
   width: 100%;
+  height: auto;
+  max-height: 580px;
+  object-fit: contain;
   display: block;
-  max-height: 280px;
-  object-fit: cover;
+  background: #ffffff;
 }
 
 /* ── RESPONSIVE ── */
@@ -782,7 +799,8 @@ textarea::placeholder { color: #bbb; }
   }
 
   .image-card img {
-    max-height: 200px;
+    max-height: 480px;
+    object-fit: contain;
   }
 
   .input-area {

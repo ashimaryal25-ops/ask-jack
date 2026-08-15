@@ -1,52 +1,81 @@
-# Ender 3 V3 KE — Slicing with Ultimaker Cura
-machine: Ender 3 V3 KE
+# Ender 3 V3 KE & CR-M4 — Slicing Guide (Creality Print & Ultimaker Cura)
+machine: Ender 3 V3 KE / CR-M4
 category: 3D printing — software / slicing
 
 ## What is slicing?
-Slicing converts your .stl or .obj model file into a .gcode file — the set of movement and temperature instructions the printer actually follows. You do this on a computer before touching the printer.
+Slicing converts your 3D model file (.STL, .OBJ, .3MF) into a `.gcode` file — the exact layer-by-layer coordinates, speed, and temperature instructions that the 3D printer executes.
 
-## Software to use
-**Ultimaker Cura** — free download at www.ultimaker.com/software
+## Slicing Software in the ICL
+The ICL computers have two slicers available:
+1. **Creality Print** (Recommended for Ender 3 V3 KE & CR-M4): Official native slicer with pre-tuned high-speed profiles for the lab's printers.
+2. **Ultimaker Cura**: Popular open-source slicer.
 
-## First-time setup (do this once)
-1. Download and install Ultimaker Cura
-2. Open Cura
-3. When prompted to add a printer, select **"Add a non-networked printer"**
-4. In the list, find **Creality → Ender 3 V3 KE**
-5. Click Add — your printer is now configured
+---
 
-## Importing your model
-1. Click the folder icon in the top-left, or go to **File → Open File**
-2. Navigate to your .stl or .obj file and open it
-3. The model will appear on the virtual print bed
+## How to Slice in Creality Print (Step-by-Step)
 
-## Adjusting your model (optional)
-Use the toolbar on the left side of the screen:
-- **Move** — reposition the model on the bed
-- **Scale** — make it bigger or smaller (check "Uniform Scaling" to keep proportions). Click the model first, then change the dimensions in the Scale panel.
-  [VIDEO: https://xyaewwhcelutcoosbawk.supabase.co/storage/v1/object/public/videos/scaling.mp4 | How to scale your model in Cura]
-- **Rotate** — tilt or spin the model. Flat side down prints best.
-- **Mirror** — flip the model horizontally
+### 1. Open Creality Print & Select Printer
+1. Open **Creality Print** from the desktop.
+2. At the top left of the window, ensure your target printer is selected from the device dropdown:
+   - **Creality Ender-3 V3 KE** (0.4mm Nozzle)
+   - OR **Creality CR-M4** (0.4mm Nozzle)
+3. Select your material from the filament dropdown: **Generic PLA** or **Hyper PLA**.
 
-## Print settings (right panel)
-For most beginner prints, the defaults work well:
+### 2. Import Your 3D Model
+1. Click the **Import** button in the top toolbar (or press `Ctrl + O` / drag-and-drop).
+2. Select your `.STL`, `.OBJ`, or `.3MF` file.
+3. Your model will appear positioned on the virtual heated bed.
 
-| Setting | Recommended | Notes |
-|---|---|---|
-| Material | PLA | Change only if using PETG or ABS |
-| Profile / Layer height | 0.2mm (Standard) | Good balance of speed and quality |
-| Infill | 20% | Fine for most objects. Increase to 50–100% for strong functional parts |
-| Generate Supports | On if needed | Enable if your model has overhangs greater than 45° |
-| Build Plate Adhesion | Brim | Helps first layer stick. Use Raft for tall or narrow objects |
+### 3. Position, Scale, and Orient Your Model
+Use the transform tools on the left toolbar:
+- **Move**: Click the model and drag to center it on the bed.
+- **Scale**: Resize dimensions. Keep "Uniform Scale" checked to preserve proportions.
+- **Rotate / Lay Flat**: Click **Rotate** and use the **Auto-orient** or **Lay Flat on Face** tool to ensure the largest flat surface rests firmly against the build plate for maximum bed adhesion.
 
-## Slicing and saving to USB
-1. Insert a USB drive into your computer
-2. Click **"Slice"** button in the bottom-right of Cura
-3. Cura will show estimated print time and material usage — review this
-4. Click **"Save to Disk"** and save the .gcode file directly to your USB drive
-5. Eject the USB safely
+### 4. Configure Slicing Settings (Right Panel)
+For standard 3D prints, use these recommended settings:
+- **Layer Height**: `0.20mm Standard` (use `0.12mm High Quality` for fine details).
+- **Infill Density**: `15% - 20%` (Pattern: *Grid* or *Gyroid*). Increase to `40% - 100%` for load-bearing or mechanical parts.
+- **Supports**: Check **Generate Support** (Tree support or Normal) if your model has overhang angles steeper than 45° or bridges floating in mid-air.
+- **Build Plate Adhesion**: Set to **Brim** (5mm) for small or tall prints to prevent corners from peeling and warping.
 
-## Common mistakes
-- Forgetting to check if supports are needed — overhanging parts will droop without them
-- Infill too low for functional parts — increase to 40%+ for parts under stress
-- Model too big for the bed — scale it down or split it in Cura
+### 5. Slice and Preview
+1. Click the blue **Slice** button in the bottom-right corner.
+2. Click **Preview** to inspect the sliced toolpath.
+3. Use the right-hand layer slider to scroll from layer 1 to top, checking that:
+   - The first layer has complete, solid lines on the bed.
+   - Overhangs have proper support structures beneath them.
+4. Note the estimated print time and filament consumption (grams).
+
+### 6. Export to USB
+1. Insert your USB drive into the computer.
+2. Click **Export to Local File** (or **Save to Disk**).
+3. Save the `.gcode` file into the root of your USB drive.
+4. Safely eject the USB drive from the computer, plug it into the printer's front USB port, and start your print.
+
+---
+
+## How to Slice in Ultimaker Cura (Alternative Slicer)
+
+1. Open **Ultimaker Cura**.
+2. If first time: click **Add a non-networked printer** → select **Creality → Ender 3 V3 KE** (or CR-M4) → click **Add**.
+3. Go to **File → Open File** and select your `.STL` or `.OBJ` model.
+4. Use left toolbar to Move, Scale, or Rotate:
+   [VIDEO: https://xyaewwhcelutcoosbawk.supabase.co/storage/v1/object/public/videos/scaling.mp4 | How to scale your model in Cura]
+5. In the right panel, configure:
+   - **Material**: Generic PLA (210°C / 60°C bed)
+   - **Profile**: 0.2mm Standard
+   - **Infill**: 20%
+   - **Generate Supports**: On if overhangs > 45°
+   - **Build Plate Adhesion**: Brim
+6. Click **Slice** in the bottom-right corner.
+7. Click **Save to Disk** and save the `.gcode` file to your USB drive.
+8. Safely eject the USB drive.
+
+---
+
+## Common Slicing Mistakes to Avoid
+- **Printing in the air**: Always ensure the model is touching the build plate (Z=0).
+- **Missing supports**: Any overhang greater than 45° will droop without support structures.
+- **No brim on thin tall prints**: Tall or small surface objects will detach mid-print without a 5mm brim.
+- **Infill too low on functional hooks/brackets**: Use at least 40–50% infill with 4 wall perimeters for weight-bearing parts.

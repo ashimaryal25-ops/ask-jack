@@ -6,7 +6,62 @@ const loading = document.getElementById("loading");
 const welcomeSection = document.getElementById("welcomeSection");
 const newChatBtn = document.getElementById("newChatBtn");
 
-let conversationHistory = [];
+// ── Section Configurations ──
+const SECTIONS = {
+  general: {
+    title: "How can I help you explore the ICL?",
+    subtitle: "Ask about lab access, policies, equipment, or staff assistance.",
+    placeholder: "Ask about lab equipment, safety, 24/7 access...",
+    suggestions: [
+      { prompt: "What equipment and tools does the ICL have?", label: "What's in the lab?" },
+      { prompt: "What are the safety rules and policies in the lab?", label: "Safety & policies" },
+      { prompt: "Where is Plank 117 and how do I get 24/7 card access?", label: "24/7 lab access" },
+      { prompt: "Who are the lab directors and staff at the ICL?", label: "Contact lab staff" },
+    ]
+  },
+  "3d-printing": {
+    title: "What would you like to 3D print?",
+    subtitle: "Ender 3 V3 KE & CR-M4 guide — slicing, filament change & troubleshooting.",
+    placeholder: "Ask about 3D printing, filament, bed adhesion, slicing...",
+    suggestions: [
+      { prompt: "How do I 3D print something at the ICL?", label: "How to 3D print" },
+      { prompt: "How do I load or change filament on the Ender 3 V3 KE?", label: "Change filament" },
+      { prompt: "My 3D print is not sticking to the bed — how to fix?", label: "Fix bed adhesion" },
+      { prompt: "How do I slice an STL file in Creality Print?", label: "Slicing guide" },
+      { prompt: "What 3D printer materials and filaments are allowed?", label: "Allowed materials" },
+    ]
+  },
+  embroidery: {
+    title: "What would you like to embroider?",
+    subtitle: "Janome Memory Craft 550E — hooping, digitizing, stabilizers & threading.",
+    placeholder: "Ask about embroidery, hooping, stabilizers, threading...",
+    suggestions: [
+      { prompt: "How do I embroider a hoodie step by step?", label: "Embroider a hoodie" },
+      { prompt: "How do I thread the Janome MC550E embroidery machine?", label: "Thread the machine" },
+      { prompt: "Which stabilizer and needle should I use for a stretchy shirt?", label: "Stabilizer & needle matrix" },
+      { prompt: "How do I convert an image to .JEF in Artistic Digitizer?", label: "Convert to .JEF" },
+      { prompt: "Why is thread bunching up underneath my fabric (birdnesting)?", label: "Fix thread bunching" },
+    ]
+  }
+};
+
+let activeSection = "general";
+
+// In-memory state for each section
+const sectionState = {
+  general: {
+    conversationHistory: [],
+    messages: [], // stores { type: 'user'|'assistant'|'guide_prompt', content, isFullGuide, rawData }
+  },
+  "3d-printing": {
+    conversationHistory: [],
+    messages: [],
+  },
+  embroidery: {
+    conversationHistory: [],
+    messages: [],
+  }
+};
 
 // ── Voice input ──
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -29,32 +84,141 @@ if (SpeechRecognition) {
     micBtn.classList.contains("listening") ? recognition.start() : recognition.stop();
   });
 } else {
-  micBtn.style.display = "none"; // hide if browser doesn't support it
+  micBtn.style.display = "none";
 }
 
-newChatBtn.addEventListener("click", () => {
-  conversationHistory = [];
-  Array.from(chatThread.children).forEach(el => {
+// ── Render Welcome Section ──
+function renderWelcome(sectionId) {
+  const config = SECTIONS[sectionId] || SECTIONS.general;
+  welcomeSection.querySelector("h2").textContent = config.title;
+  welcomeSection.querySelector("p").textContent = config.subtitle;
+  const pillsContainer = welcomeSection.querySelector(".welcome-suggestions");
+  pillsContainer.innerHTML = "";
+  config.suggestions.forEach((s) => {
+    const btn = document.createElement("button");
+    btn.className = "suggestion-pill";
+    btn.dataset.prompt = s.prompt;
+    btn.textContent = s.label;
+    btn.addEventListener("click", () => {
+      questionInput.value = s.prompt;
+      questionInput.focus();
+      questionInput.dispatchEvent(new Event("input"));
+    });
+    pillsContainer.appendChild(btn);
+  });
+}
+
+// ── Switch Active Section ──
+let activeItemElement = document.querySelector(".machine-item.active") || document.querySelector(".machine-item");
+
+function switchSection(sectionId, targetPrompt = null, clickedItem = null) {
+  if (!SECTIONS[sectionId]) return;
+  activeSection = sectionId;
+
+  // Update active sidebar item — highlight ONLY the single active button
+  if (clickedItem) {
+    activeItemElement = clickedItem;
+  } else if (!activeItemElement || activeItemElement.dataset.section !== sectionId) {
+    activeItemElement = document.querySelector(`.machine-item[data-section="${sectionId}"]`);
+  }
+
+  document.querySelectorAll(".machine-item").forEach((btn) => {
+    btn.classList.toggle("active", btn === activeItemElement);
+  });
+
+  // Update placeholder
+  questionInput.placeholder = SECTIONS[sectionId].placeholder;
+
+  // Re-render chat thread for this section
+  renderCurrentSectionChat();
+
+  if (targetPrompt) {
+    questionInput.value = targetPrompt;
+    questionInput.focus();
+    questionInput.dispatchEvent(new Event("input"));
+  }
+}
+
+function renderCurrentSectionChat() {
+  const state = sectionState[activeSection];
+  
+  // Remove all message elements (keep welcomeSection)
+  Array.from(chatThread.children).forEach((el) => {
     if (el.id !== "welcomeSection") el.remove();
   });
-  welcomeSection.hidden = false;
-  newChatBtn.classList.remove("visible");
-  questionInput.value = "";
-  questionInput.style.height = "auto";
-});
 
-document.querySelectorAll(".suggestion-pill").forEach((pill) => {
-  pill.addEventListener("click", () => {
-    questionInput.value = pill.dataset.prompt || pill.textContent.trim();
-    questionInput.focus();
-  });
-});
+  renderWelcome(activeSection);
 
+  if (state.messages.length === 0) {
+    welcomeSection.hidden = false;
+    newChatBtn.classList.remove("visible");
+  } else {
+    welcomeSection.hidden = true;
+    newChatBtn.classList.add("visible");
+
+    // Reconstruct messages for this section
+    state.messages.forEach((msg) => {
+      if (msg.type === "user") {
+        const div = document.createElement("div");
+        div.className = "user-bubble";
+        div.textContent = msg.content;
+        chatThread.appendChild(div);
+      } else if (msg.type === "guide_prompt") {
+        renderStoredGuideOptions(msg.originalQuery, msg.selectedMode);
+      } else if (msg.type === "assistant") {
+        const wrapper = document.createElement("div");
+        wrapper.className = "assistant-message";
+        wrapper.innerHTML = `
+          <div class="answer-header">
+            <div class="assistant-tag"><span class="dot"></span>Jack</div>
+            <button class="copy-btn" type="button">Copy</button>
+          </div>
+          <div class="answer-content">${formatMarkdown(msg.content)}</div>
+        `;
+        wrapper.querySelector(".copy-btn").addEventListener("click", (e) => {
+          const content = wrapper.querySelector(".answer-content");
+          navigator.clipboard.writeText(content.innerText);
+          e.target.textContent = "Copied!";
+          setTimeout(() => (e.target.textContent = "Copy"), 2000);
+        });
+
+        if (msg.feedbackPayload) {
+          attachFeedbackControls(wrapper, msg.feedbackPayload);
+        }
+
+        const hasMultipleSteps = /step\s*[23456789]/i.test(msg.content) || (msg.content.match(/\n\d+\./g) || []).length >= 3;
+        if (msg.isFullGuide && hasMultipleSteps) {
+          const dlBtn = document.createElement("button");
+          dlBtn.className = "download-btn";
+          dlBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Save as PDF`;
+          dlBtn.addEventListener("click", () => printGuide(msg.content));
+          wrapper.appendChild(dlBtn);
+        }
+
+        chatThread.appendChild(wrapper);
+      }
+    });
+
+    chatThread.scrollTop = chatThread.scrollHeight;
+  }
+}
+
+// ── Sidebar Click Handling ──
 document.querySelectorAll(".machine-item").forEach((item) => {
   item.addEventListener("click", () => {
-    questionInput.value = item.dataset.prompt || "";
-    questionInput.focus();
+    const section = item.dataset.section || "general";
+    const prompt = item.dataset.prompt || "";
+    switchSection(section, prompt, item);
   });
+});
+
+// ── New Chat (clears only active section) ──
+newChatBtn.addEventListener("click", () => {
+  sectionState[activeSection].conversationHistory = [];
+  sectionState[activeSection].messages = [];
+  renderCurrentSectionChat();
+  questionInput.value = "";
+  questionInput.style.height = "auto";
 });
 
 // Auto-grow textarea
@@ -75,17 +239,15 @@ askBtn.addEventListener("click", askQuestion);
 // ── Detect guide-type requests ──
 function isGuideRequest(query) {
   const q = query.toLowerCase().trim();
-  // Don't intercept troubleshooting or process-specific questions
-  if (/error|fix|broken|not working|failed|stuck|wrong|issue|problem|clog|remove|take off|peel|unstuck|detach/i.test(q)) return false;
-  // Require a noun/object after the action verb — bare verbs like "how to print" go to
-  // Jack for clarification first, then the guide selector fires on the follow-up
+  if (/laser|glowforge|cnc|router|resin|formlabs|lathe|soldering|iron|cricut|vinyl cutter/i.test(q)) return false;
+  if (/error|fix|broken|not working|failed|stuck|wrong|issue|problem|clog|remove|take off|peel|unstuck|detach|snap|break|birdnest|pucker|where is|location|what is|find/i.test(q)) return false;
   const patterns = [
-    /how (do|can|should) i (use|make|create|3d\s?print|print|cut|start|begin|do)\s+\w/i,
-    /how to (use|make|create|3d\s?print|print|cut|start)\s+\w/i,
+    /how (do|can|should) i (use|make|create|3d\s?print|print|start|begin|do|embroider|sew|stitch|digitize)\s+\w/i,
+    /how to (use|make|create|3d\s?print|print|start|embroider|sew|stitch|digitize)\s+\w/i,
     /walk me through\s+\w/i,
-    /i want to (make|create|print|3d\s?print|cut|build|use)\s+\w/i,
-    /i('d like| would like) to (make|create|print|3d\s?print|cut|build)\s+\w/i,
-    /help me (make|create|print|cut|build)\s+\w/i,
+    /i want to (make|create|print|3d\s?print|build|use|embroider|sew|stitch|digitize)\s+\w/i,
+    /i('d like| would like) to (make|create|print|3d\s?print|build|embroider|sew|stitch|digitize)\s+\w/i,
+    /help me (make|create|print|build|embroider|sew|stitch|digitize)\s+\w/i,
     /help me use the\s+\w/i,
     /get started (with|on)\s+\w/i,
   ];
@@ -100,6 +262,11 @@ function appendUserBubble(text) {
   div.textContent = text;
   chatThread.appendChild(div);
   div.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+  sectionState[activeSection].messages.push({
+    type: "user",
+    content: text,
+  });
 }
 
 function appendAssistantBubble() {
@@ -122,8 +289,19 @@ function appendAssistantBubble() {
   return { contentEl: wrapper.querySelector(".answer-content"), wrapperEl: wrapper };
 }
 
-// ── Show guide mode options ──
+// ── Guide Options Prompt ──
 function showGuideOptions(originalQuery) {
+  const msgRecord = {
+    type: "guide_prompt",
+    originalQuery,
+    selectedMode: null,
+  };
+  sectionState[activeSection].messages.push(msgRecord);
+
+  renderStoredGuideOptions(originalQuery, null, msgRecord);
+}
+
+function renderStoredGuideOptions(originalQuery, selectedMode = null, msgRecordRef = null) {
   const wrapper = document.createElement("div");
   wrapper.className = "assistant-message";
   wrapper.innerHTML = `
@@ -153,11 +331,27 @@ function showGuideOptions(originalQuery) {
   chatThread.appendChild(wrapper);
   wrapper.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
-  wrapper.querySelectorAll(".guide-option").forEach(btn => {
+  if (selectedMode) {
+    wrapper.querySelectorAll(".guide-option").forEach((b) => {
+      b.disabled = true;
+      if (b.dataset.mode === selectedMode) {
+        b.style.opacity = "1";
+        b.style.borderColor = "var(--orange)";
+        b.style.background = "#fff5f0";
+      } else {
+        b.style.opacity = "0.45";
+        b.style.cursor = "default";
+      }
+    });
+    return;
+  }
+
+  wrapper.querySelectorAll(".guide-option").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const mode = btn.dataset.mode;
-      // Lock options after selection
-      wrapper.querySelectorAll(".guide-option").forEach(b => {
+      if (msgRecordRef) msgRecordRef.selectedMode = mode;
+
+      wrapper.querySelectorAll(".guide-option").forEach((b) => {
         b.disabled = true;
         b.style.opacity = "0.45";
         b.style.cursor = "default";
@@ -166,11 +360,12 @@ function showGuideOptions(originalQuery) {
       btn.style.borderColor = "var(--orange)";
       btn.style.background = "#fff5f0";
 
-      const userMessage = mode === "steps"
-        ? `${originalQuery} — Please walk me through this one step at a time. Give me only Step 1 first, then wait for me to say "next" before continuing to the next step.`
-        : `${originalQuery} — Give me the COMPLETE guide with ALL steps right now in one response. Do NOT stop after Step 1. Do NOT wait for me to say "next". Ignore any previous step-by-step instructions. Show every step from start to finish.`;
+      const userMessage =
+        mode === "steps"
+          ? `${originalQuery} — Please walk me through this one step at a time. Give me only Step 1 first, then wait for me to say "next" before continuing to the next step.`
+          : `${originalQuery} — Give me the COMPLETE guide with ALL steps right now in one response. Do NOT stop after Step 1. Do NOT wait for me to say "next". Ignore any previous step-by-step instructions. Show every step from start to finish.`;
 
-      conversationHistory.push({ role: "user", content: userMessage });
+      sectionState[activeSection].conversationHistory.push({ role: "user", content: userMessage });
       await streamFromAPI(mode === "full");
     });
   });
@@ -180,14 +375,15 @@ function showGuideOptions(originalQuery) {
 async function streamFromAPI(isFullGuide = false) {
   askBtn.disabled = true;
   loading.hidden = false;
-  const questionForFeedback = [...conversationHistory].reverse().find(m => m.role === "user")?.content || "";
-  const conversationForFeedback = conversationHistory.slice();
+  const currentHistory = sectionState[activeSection].conversationHistory;
+  const questionForFeedback = [...currentHistory].reverse().find((m) => m.role === "user")?.content || "";
+  const conversationForFeedback = currentHistory.slice();
 
   try {
     const res = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: conversationHistory }),
+      body: JSON.stringify({ messages: currentHistory, section: activeSection }),
     });
 
     if (!res.ok) throw new Error("Server error");
@@ -220,17 +416,18 @@ async function streamFromAPI(isFullGuide = false) {
         } catch {}
       }
     }
-    // Final render with actual video/image elements (avoids flicker during streaming)
-    contentEl.innerHTML = formatMarkdown(fullText);
 
-    conversationHistory.push({ role: "assistant", content: fullText });
-    attachFeedbackControls(wrapperEl, {
+    contentEl.innerHTML = formatMarkdown(fullText);
+    currentHistory.push({ role: "assistant", content: fullText });
+
+    const feedbackPayload = {
       question: questionForFeedback,
       answer: fullText,
       conversation: conversationForFeedback,
-    });
+    };
 
-    // Add download button only for full guide responses that actually contain multiple steps
+    attachFeedbackControls(wrapperEl, feedbackPayload);
+
     const hasMultipleSteps = /step\s*[23456789]/i.test(fullText) || (fullText.match(/\n\d+\./g) || []).length >= 3;
     if (isFullGuide && hasMultipleSteps) {
       const dlBtn = document.createElement("button");
@@ -240,13 +437,19 @@ async function streamFromAPI(isFullGuide = false) {
       wrapperEl.appendChild(dlBtn);
     }
 
-    wrapperEl.scrollIntoView({ behavior: "smooth", block: "end" });
+    // Record assistant message in section state
+    sectionState[activeSection].messages.push({
+      type: "assistant",
+      content: fullText,
+      isFullGuide,
+      feedbackPayload,
+    });
 
+    wrapperEl.scrollIntoView({ behavior: "smooth", block: "end" });
   } catch (err) {
     loading.hidden = true;
     const { contentEl } = appendAssistantBubble();
     contentEl.innerHTML = `<p style="color:red">Something went wrong. Please try again.</p>`;
-
   } finally {
     askBtn.disabled = false;
     loading.hidden = true;
@@ -333,12 +536,12 @@ function printGuide(markdownText) {
 }
 
 function lastAssistantAskedClarification() {
-  const lastAssistant = [...conversationHistory].reverse().find(m => m.role === "assistant");
+  const currentHistory = sectionState[activeSection].conversationHistory;
+  const lastAssistant = [...currentHistory].reverse().find((m) => m.role === "assistant");
   if (!lastAssistant) return false;
-  return /what (are you trying|would you like|do you want) to (make|print|cut|build|create)|what (machine|equipment)|have (a machine|something) in mind/i.test(lastAssistant.content);
+  return /what (are you trying|would you like|do you want) to (make|print|cut|build|create|embroider|sew)|what (machine|equipment)|have (a machine|something) in mind/i.test(lastAssistant.content);
 }
 
-// Ask the model whether the reply actually names a task — regex can't classify free text
 async function isTaskReply(query) {
   try {
     const res = await fetch("/api/classify", {
@@ -350,7 +553,7 @@ async function isTaskReply(query) {
     const { isTask } = await res.json();
     return isTask === true;
   } catch {
-    return false; // on any failure just answer normally — never block the user
+    return false;
   }
 }
 
@@ -371,29 +574,27 @@ async function askQuestion() {
     if (task) {
       showGuideOptions(question);
     } else {
-      conversationHistory.push({ role: "user", content: question });
+      sectionState[activeSection].conversationHistory.push({ role: "user", content: question });
       await streamFromAPI();
     }
   } else {
-    conversationHistory.push({ role: "user", content: question });
+    sectionState[activeSection].conversationHistory.push({ role: "user", content: question });
     await streamFromAPI();
   }
 }
 
 function formatMarkdownStreaming(text) {
-  // Strip complete media tags to plain labels
-  text = text.replace(/\[VIDEO:\s*https?:\/\/[^\s|]+\s*\|\s*([^\]]+)\]/g, '▶ $1');
-  text = text.replace(/\[IMAGE:\s*https?:\/\/[^\s|]+\s*\|\s*([^\]]+)\]/g, '🖼 $1');
-  // Strip incomplete/partial tags mid-stream (tag started but ] not received yet)
-  text = text.replace(/\[VIDEO:[^\]]*$/, '');
-  text = text.replace(/\[IMAGE:[^\]]*$/, '');
+  text = text.replace(/\[VIDEO:\s*(?:https?:\/\/[^\s|]+|\/[^\s|]+)\s*\|\s*([^\]]+)\]/g, "▶ $1");
+  text = text.replace(/\[IMAGE:\s*(?:https?:\/\/[^\s|]+|\/[^\s|]+)\s*\|\s*([^\]]+)\]/g, "🖼 $1");
+  text = text.replace(/\[VIDEO:[^\]]*$/, "");
+  text = text.replace(/\[IMAGE:[^\]]*$/, "");
   return formatMarkdown(text);
 }
 
 function formatMarkdown(text) {
   const media = [];
   text = text.replace(
-    /\[VIDEO:\s*(https?:\/\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
+    /\[VIDEO:\s*(https?:\/\/[^\s|]+|\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
     (_, url, title) => {
       const idx = media.length;
       media.push(`<div class="video-card"><video controls preload="metadata" playsinline onloadedmetadata="this.closest('.video-card').classList.toggle('portrait',this.videoHeight>this.videoWidth)"><source src="${url}" type="video/mp4"></video><span class="media-label">▶ ${title.trim()}</span></div>`);
@@ -401,7 +602,7 @@ function formatMarkdown(text) {
     }
   );
   text = text.replace(
-    /\[IMAGE:\s*(https?:\/\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
+    /\[IMAGE:\s*(https?:\/\/[^\s|]+|\/[^\s|]+)\s*\|\s*([^\]]+)\]/g,
     (_, url, caption) => {
       const idx = media.length;
       media.push(`<div class="image-card"><img src="${url}" alt="${caption.trim()}" loading="lazy"><span class="media-label">${caption.trim()}</span></div>`);
@@ -440,3 +641,6 @@ function formatMarkdown(text) {
 
   return html;
 }
+
+// Initial setup
+renderWelcome(activeSection);

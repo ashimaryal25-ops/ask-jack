@@ -36,19 +36,37 @@
 
       <!-- Sidebar -->
       <aside class="sidebar">
-        <p class="sidebar-label">Equipment</p>
+        <p class="sidebar-label">Workspaces</p>
         <div class="machine-list">
+          <button class="machine-item active" data-section="general">
+            <div class="machine-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </div>
+            <div class="machine-info">
+              <strong>General Lab</strong>
+              <span>Plank 117 · Access &amp; Safety</span>
+            </div>
+          </button>
 
-          <button class="machine-item" data-prompt="How do I 3D print something at the ICL?">
+          <button class="machine-item" data-section="3d-printing">
             <div class="machine-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><path d="M7 7h10M7 11h6"/></svg>
             </div>
             <div class="machine-info">
               <strong>3D Printing</strong>
-              <span>Ender 3 V3 KE</span>
+              <span>Ender 3 V3 KE &amp; CR-M4</span>
             </div>
           </button>
 
+          <button class="machine-item" data-section="embroidery">
+            <div class="machine-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M3 12h18"/><path d="m7.5 7.5 9 9"/><path d="m16.5 7.5-9 9"/></svg>
+            </div>
+            <div class="machine-info">
+              <strong>Embroidery</strong>
+              <span>Janome Memory Craft 550E</span>
+            </div>
+          </button>
         </div>
 
         <div class="sidebar-footer">
@@ -69,8 +87,9 @@
             <p>Ask me anything about the lab equipment — I'll guide you step by step.</p>
             <div class="welcome-suggestions">
               <button class="suggestion-pill" data-prompt="What equipment does the ICL have?">What's in the lab?</button>
-              <button class="suggestion-pill" data-prompt="I want to make something but I don't know where to start.">I don't know where to start</button>
               <button class="suggestion-pill" data-prompt="How do I 3D print something?">How does 3D printing work?</button>
+              <button class="suggestion-pill" data-prompt="How do I embroider something?">How does embroidery work?</button>
+              <button class="suggestion-pill" data-prompt="Which stabilizer and hoop size do I need for embroidery?">Stabilizers &amp; hoop guide</button>
               <button class="suggestion-pill" data-prompt="What are the safety rules in the lab?">Safety rules</button>
             </div>
           </div>
