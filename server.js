@@ -162,7 +162,7 @@ async function streamAnswer(messages, chunks, section, res) {
     general:
       "GENERAL LAB workspace. You may answer questions about ANY lab topic or machine — 3D printing, embroidery, safety, access, software, and tools.",
     "3d-printing":
-      "3D PRINTING workspace (Ender 3 V3 KE & CR-M4). Answer 3D printing questions and general lab questions (access, safety, policies). If the user asks about EMBROIDERY or the Janome machine, do NOT answer it here — in one friendly sentence, tell them to switch to the Embroidery workspace using the sidebar on the left.",
+      "3D PRINTING workspace (Ender 3 V3 KE). Answer 3D printing questions and general lab questions (access, safety, policies). If the user asks about EMBROIDERY or the Janome machine, do NOT answer it here — in one friendly sentence, tell them to switch to the Embroidery workspace using the sidebar on the left.",
     embroidery:
       "EMBROIDERY workspace (Janome Memory Craft 550E). Answer embroidery questions and general lab questions (access, safety, policies). If the user asks about 3D PRINTING or the Ender/Creality printers, do NOT answer it here — in one friendly sentence, tell them to switch to the 3D Printing workspace using the sidebar on the left.",
   }[section] || "GENERAL LAB workspace. You may answer questions about any lab topic or machine.";

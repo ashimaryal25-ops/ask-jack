@@ -21,7 +21,7 @@ const SECTIONS = {
   },
   "3d-printing": {
     title: "What would you like to 3D print?",
-    subtitle: "Ender 3 V3 KE & CR-M4 guide — slicing, filament change & troubleshooting.",
+    subtitle: "Ender 3 V3 KE guide — slicing, filament change & troubleshooting.",
     placeholder: "Ask about 3D printing, filament, bed adhesion, slicing...",
     suggestions: [
       { prompt: "How do I 3D print something at the ICL?", label: "How to 3D print" },
