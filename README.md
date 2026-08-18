@@ -22,11 +22,17 @@ It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg 
 
 ## Demo
 
-| Ask in plain English | Choose how to be guided | Follow real lab steps, with video |
-|:---:|:---:|:---:|
-| ![Jack home screen](docs/demo-1-home.png) | ![Guide-mode selection](docs/demo-2-guide.png) | ![Step-by-step with inline video](docs/demo-3-steps.png) |
+Jack organizes the lab into workspaces — a universal **General Lab** plus a focused tab per machine — and turns a plain-English question into real lab steps with inline photos, videos, and diagrams.
 
-A vague request (*"i dont know how to 3d print"*) is caught by intent classification, branched into a guided walkthrough, and answered one step at a time — with photos and videos of the actual ICL equipment rendered inline.
+| Explore the lab | Choose how to be guided | Follow steps, with video |
+|:---:|:---:|:---:|
+| ![Jack home screen with workspaces](docs/demo-1-home.png) | ![Full Guide vs Step by Step selector](docs/demo-2-guide.png) | ![Step one with an inline how-to video](docs/demo-3-steps.png) |
+
+| Dedicated Embroidery workspace | High-resolution machine diagrams |
+|:---:|:---:|
+| ![Embroidery hooping walkthrough](docs/demo-4-embroidery.png) | ![Inline embroidery hooping diagram](docs/demo-5-diagram.png) |
+
+A vague request (*"i dont know how to 3d print"*) is caught by intent classification, branched into a guided walkthrough, and answered one step at a time. Each machine has its own focused workspace, and answers render the actual ICL equipment — videos, photos, and manual diagrams — inline where the step needs them.
 
 ---
 
