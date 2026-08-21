@@ -1,6 +1,6 @@
 # Jack — Makerspace AI Assistant
 
-> A production agentic RAG assistant that guides complete beginners through makerspace equipment, step by step — even when no instructor is around.
+> A RAG assistant that guides complete beginners through makerspace equipment, step by step — even when no instructor is around.
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat&logo=openai&logoColor=white)
@@ -10,7 +10,7 @@
 
 **Jack** is an independent project I built to help students use makerspace equipment on their own. Students ask a question in plain English — *"how do I 3D print a phone stand?"* — and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
 
-Every answer is grounded in a custom knowledge base of ICL-specific documentation through an agentic Retrieval-Augmented Generation (RAG) pipeline — so Jack answers from the lab's actual procedures and says "I don't have that yet" instead of hallucinating when it doesn't know.
+Every answer is grounded in a custom knowledge base of ICL-specific documentation through a Retrieval-Augmented Generation (RAG) pipeline — so Jack answers from the lab's actual procedures and says "I don't have that yet" instead of hallucinating when it doesn't know.
 
 It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg College alumnus whose philanthropy made the lab possible.
 
@@ -36,7 +36,7 @@ A vague request (*"i dont know how to 3d print"*) is caught by intent classifica
 
 ## Features
 
-- **Grounded agentic RAG answers** — responses come only from the ICL knowledge base, not the model's training data
+- **Grounded RAG answers** — responses come only from the ICL knowledge base, not the model's training data
 - **Two guide modes** — a full walkthrough all at once, or one step at a time at the student's pace
 - **Inline media** — videos and photos of the real lab equipment render directly inside the steps
 - **Conversation memory** — students can ask follow-up questions mid-process and Jack stays in context
@@ -51,7 +51,7 @@ A vague request (*"i dont know how to 3d print"*) is caught by intent classifica
 
 ## How it works
 
-Jack runs a two-phase agentic RAG pipeline.
+Jack runs a two-phase RAG pipeline.
 
 **Phase 1 — Ingestion** (run once when docs change):
 
