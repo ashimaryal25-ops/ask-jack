@@ -1,6 +1,6 @@
 # Jack — Makerspace AI Assistant
 
-> A RAG assistant that guides complete beginners through makerspace equipment, step by step — even when no instructor is around.
+> A RAG assistant that rewrites the student's question, retrieves from lab docs, and walks them through makerspace equipment step by step.
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white)
 ![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat&logo=openai&logoColor=white)
@@ -10,7 +10,7 @@
 
 **Jack** is an independent project I built to help students use makerspace equipment on their own. Students ask a question in plain English — *"how do I 3D print a phone stand?"* — and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
 
-Every answer is grounded in a custom knowledge base of ICL-specific documentation through a Retrieval-Augmented Generation (RAG) pipeline — so Jack answers from the lab's actual procedures and says "I don't have that yet" instead of hallucinating when it doesn't know.
+Every answer is grounded in a custom knowledge base of ICL-specific documentation. Jack does not treat the raw chat message as the search query. It first turns the conversation into a focused retrieval question, then looks that up in the lab docs, then answers from those chunks. If the docs do not cover it, it says so instead of guessing.
 
 It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg College alumnus whose philanthropy made the lab possible.
 
@@ -36,6 +36,7 @@ A vague request (*"i dont know how to 3d print"*) is caught by intent classifica
 
 ## Features
 
+- **Query rewriting** — before search, the recent conversation is rewritten into one retrieval question (machine, step, tool)
 - **Grounded RAG answers** — responses come only from the ICL knowledge base, not the model's training data
 - **Two guide modes** — a full walkthrough all at once, or one step at a time at the student's pace
 - **Inline media** — videos and photos of the real lab equipment render directly inside the steps
@@ -51,7 +52,7 @@ A vague request (*"i dont know how to 3d print"*) is caught by intent classifica
 
 ## How it works
 
-Jack runs a two-phase RAG pipeline.
+Jack is rewrite-then-retrieve RAG, not a retrieve-in-a-loop agent.
 
 **Phase 1 — Ingestion** (run once when docs change):
 
@@ -66,13 +67,21 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  A[Student question] --> B[Embed the question]
-  B --> C[pgvector cosine search]
-  C --> D[Top relevant chunks]
-  D --> E[Inject into system prompt]
-  E --> F[gpt-4o-mini · streaming]
-  F --> G[SSE → word-by-word in the browser]
+  A[Student message] --> B[Keep last real question<br/>if they said next/ok]
+  B --> C[Rewrite into a retrieval query]
+  C --> D[Embed that query]
+  D --> E[pgvector cosine search]
+  E --> F[Filter by workspace]
+  F --> G[Answer from those chunks]
 ```
+
+1. If the student just said *next* or *ok*, retrieval uses their last real question, not the filler.
+2. The conversation is sent to `gpt-4o-mini`, which writes one search query: machine + step + tool or material.
+3. That rewritten query is embedded and searched in pgvector.
+4. Chunks are filtered to the active workspace (general, 3D printing, or embroidery).
+5. Jack answers from those chunks only. Image/video tags that were not in the retrieved docs are stripped.
+
+Query rewriting is the `expandQuery` step in `server.js`. Set `QUERY_EXPANSION=1` to turn it on.
 
 The knowledge base is plain Markdown, so adding a new machine is just writing a new doc and re-running ingestion — no code changes. Media is embedded with simple `[VIDEO: url | title]` and `[IMAGE: url | caption]` tags that the frontend renders into players and images.
 
