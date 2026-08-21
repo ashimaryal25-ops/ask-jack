@@ -1,4 +1,4 @@
-# Jack — Makerspace AI Assistant
+# Jack: Makerspace AI Assistant
 
 > A RAG assistant that rewrites the student's question, retrieves from lab docs, and walks them through makerspace equipment step by step.
 
@@ -8,7 +8,7 @@
 ![Railway](https://img.shields.io/badge/Deployed_on_Railway-0B0D0E?style=flat&logo=railway&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/Vanilla_JS-F7DF1E?style=flat&logo=javascript&logoColor=black)
 
-**Jack** is an independent project I built to help students use makerspace equipment on their own. Students ask a question in plain English — *"how do I 3D print a phone stand?"* — and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
+**Jack** is an independent project I built to help students use makerspace equipment on their own. Students ask a question in plain English (*"how do I 3D print a phone stand?"*) and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
 
 Every answer is grounded in a custom knowledge base of ICL-specific documentation. Jack does not treat the raw chat message as the search query. It first turns the conversation into a focused retrieval question, then looks that up in the lab docs, then answers from those chunks. If the docs do not cover it, it says so instead of guessing.
 
@@ -20,7 +20,7 @@ It is named after Clarence B. "Jack" Rogers Jr. (Class of 1951), the Gettysburg 
 
 ## Demo
 
-Jack organizes the lab into workspaces — a universal **General Lab** plus a focused tab per machine — and turns a plain-English question into real lab steps with inline photos, videos, and diagrams.
+Jack organizes the lab into workspaces: a universal **General Lab** plus a focused tab per machine. A plain-English question becomes real lab steps with inline photos, videos, and diagrams.
 
 | Explore the lab | Choose how to be guided | Follow steps, with video |
 |:---:|:---:|:---:|
@@ -30,31 +30,29 @@ Jack organizes the lab into workspaces — a universal **General Lab** plus a fo
 |:---:|:---:|
 | ![Embroidery hooping walkthrough](docs/demo-4-embroidery.png) | ![Inline embroidery hooping diagram](docs/demo-5-diagram.png) |
 
-A vague request (*"i dont know how to 3d print"*) is caught by intent classification, branched into a guided walkthrough, and answered one step at a time. Each machine has its own focused workspace, and answers render the actual ICL equipment — videos, photos, and manual diagrams — inline where the step needs them.
+A vague request (*"i dont know how to 3d print"*) is caught by intent classification, branched into a guided walkthrough, and answered one step at a time. Each machine has its own focused workspace. Answers render the actual ICL equipment (videos, photos, and manual diagrams) inline where the step needs them.
 
 ---
 
 ## Features
 
-- **Query rewriting** — before search, the recent conversation is rewritten into one retrieval question (machine, step, tool)
-- **Grounded RAG answers** — responses come only from the ICL knowledge base, not the model's training data
-- **Two guide modes** — a full walkthrough all at once, or one step at a time at the student's pace
-- **Inline media** — videos and photos of the real lab equipment render directly inside the steps
-- **Conversation memory** — students can ask follow-up questions mid-process and Jack stays in context
-- **Voice input** — ask by speaking, for kiosk and touchscreen use
-- **Save as PDF** — export a full guide as a printable sheet to take to the machine
-- **Intent classification** — detects when a vague request should branch into a guided walkthrough
-- **Feedback logging** — 👍/👎 on each answer, stored for measuring real-world helpfulness
-- **Hardened endpoints** — per-IP rate limiting, request-size caps, and path-traversal protection
-- **Streaming responses** — answers stream in word-by-word over Server-Sent Events
+- **Query rewriting:** before search, the recent conversation is rewritten into one retrieval question (machine, step, tool)
+- **Grounded RAG answers:** responses come only from the ICL knowledge base, not the model's training data
+- **Two guide modes:** a full walkthrough all at once, or one step at a time at the student's pace
+- **Inline media:** videos and photos of the real lab equipment render directly inside the steps
+- **Conversation memory:** students can ask follow-up questions mid-process and Jack stays in context
+- **Voice input:** ask by speaking, for kiosk and touchscreen use
+- **Save as PDF:** export a full guide as a printable sheet to take to the machine
+- **Intent classification:** detects when a vague request should branch into a guided walkthrough
+- **Feedback logging:** 👍/👎 on each answer, stored for measuring real-world helpfulness
+- **Hardened endpoints:** per-IP rate limiting, request-size caps, and path-traversal protection
+- **Streaming responses:** answers stream in word-by-word over Server-Sent Events
 
 ---
 
 ## How it works
 
-Jack is rewrite-then-retrieve RAG, not a retrieve-in-a-loop agent.
-
-**Phase 1 — Ingestion** (run once when docs change):
+**Phase 1: Ingestion** (run once when docs change):
 
 ```mermaid
 flowchart LR
@@ -63,7 +61,7 @@ flowchart LR
   C --> D[(Supabase pgvector)]
 ```
 
-**Phase 2 — Query** (every student message):
+**Phase 2: Query** (every student message):
 
 ```mermaid
 flowchart LR
@@ -83,7 +81,7 @@ flowchart LR
 
 Query rewriting is the `expandQuery` step in `server.js`. Set `QUERY_EXPANSION=1` to turn it on.
 
-The knowledge base is plain Markdown, so adding a new machine is just writing a new doc and re-running ingestion — no code changes. Media is embedded with simple `[VIDEO: url | title]` and `[IMAGE: url | caption]` tags that the frontend renders into players and images.
+The knowledge base is plain Markdown, so adding a new machine is just writing a new doc and re-running ingestion. Media is embedded with simple `[VIDEO: url | title]` and `[IMAGE: url | caption]` tags that the frontend renders into players and images.
 
 ---
 
@@ -107,5 +105,3 @@ The knowledge base is plain Markdown, so adding a new machine is just writing a 
 - A source side-panel so students can open the original document beside a step
 - Floating desktop widget + kiosk mode for the lab computers
 - Photo upload so students can show Jack a problem and get a diagnosis
-
----
