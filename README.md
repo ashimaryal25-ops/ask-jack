@@ -8,8 +8,6 @@
 ![Railway](https://img.shields.io/badge/Deployed_on_Railway-0B0D0E?style=flat&logo=railway&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/Vanilla_JS-F7DF1E?style=flat&logo=javascript&logoColor=black)
 
-### 🔗 Live: [ask-jack-production.up.railway.app](https://ask-jack-production.up.railway.app)
-
 **Jack** is an independent project I built to help students use makerspace equipment on their own. Students ask a question in plain English — *"how do I 3D print a phone stand?"* — and Jack walks them through the real lab procedure, one step at a time, with inline photos and videos of the actual equipment.
 
 Every answer is grounded in a custom knowledge base of ICL-specific documentation through an agentic Retrieval-Augmented Generation (RAG) pipeline — so Jack answers from the lab's actual procedures and says "I don't have that yet" instead of hallucinating when it doesn't know.
